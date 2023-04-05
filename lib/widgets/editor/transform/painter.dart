@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 
 class CropperPainter extends CustomPainter {
   final Rect rect;
+  final double gridOpacity;
+  final int gridDivision;
 
   const CropperPainter({
     required this.rect,
+    required this.gridOpacity,
+    required this.gridDivision,
   });
 
   static const double cornerRadius = 6;
   static const double borderWidth = 2;
   static const double gridWidth = 1;
-  static const int gridCount = 3;
 
   static final scrimColor = Colors.black.withOpacity(.5);
   static const cornerColor = Colors.white;
@@ -32,7 +35,7 @@ class CropperPainter extends CustomPainter {
     final gridPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = gridWidth
-      ..color = gridColor;
+      ..color = gridColor.withOpacity(gridColor.opacity * gridOpacity);
 
     final outside = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
@@ -51,8 +54,8 @@ class CropperPainter extends CustomPainter {
 
     final gridLeft = xLeft + borderWidth / 2;
     final gridRight = xRight - borderWidth / 2;
-    final yStep = (yBottom - yTop) / gridCount;
-    for (var i = 1; i < gridCount; i++) {
+    final yStep = (yBottom - yTop) / gridDivision;
+    for (var i = 1; i < gridDivision; i++) {
       canvas.drawLine(
         Offset(gridLeft, yTop + i * yStep),
         Offset(gridRight, yTop + i * yStep),
@@ -61,8 +64,8 @@ class CropperPainter extends CustomPainter {
     }
     final gridTop = yTop + borderWidth / 2;
     final gridBottom = yBottom - borderWidth / 2;
-    final xStep = (xRight - xLeft) / gridCount;
-    for (var i = 1; i < gridCount; i++) {
+    final xStep = (xRight - xLeft) / gridDivision;
+    for (var i = 1; i < gridDivision; i++) {
       canvas.drawLine(
         Offset(xLeft + i * xStep, gridTop),
         Offset(xLeft + i * xStep, gridBottom),

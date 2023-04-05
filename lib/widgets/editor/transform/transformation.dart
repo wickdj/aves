@@ -19,6 +19,10 @@ class TransformController {
 
   Stream<Transformation> get transformationStream => _transformationStreamController.stream;
 
+  final StreamController<TransformEvent> _eventStreamController = StreamController.broadcast();
+
+  Stream<TransformEvent> get eventStream => _eventStreamController.stream;
+
   static const double straightenDegreesMin = -45;
   static const double straightenDegreesMax = 45;
 
@@ -68,8 +72,12 @@ class TransformController {
     );
     _transformationStreamController.add(_transformation);
   }
+  
+  set activity(TransformActivity activity) => _eventStreamController.add(TransformEvent(activity: activity));
 
-  void _onAspectRatioChanged() {}
+  void _onAspectRatioChanged() {
+    // TODO TLAD [crop] apply
+  }
 }
 
 @immutable
@@ -141,6 +149,17 @@ class Transformation extends Equatable {
 
   Matrix4 get _straightenMatrix => Matrix4.rotationZ(degToRadian((orientation.isFlipped ? -1 : 1) * straightenDegrees));
 }
+
+@immutable
+class TransformEvent {
+  final TransformActivity activity;
+
+  const TransformEvent({
+    required this.activity,
+  });
+}
+
+enum TransformActivity { none, resize, straighten }
 
 enum TransformOrientation { normal, rotate90, rotate180, rotate270, transverse, flipVertical, transpose, flipHorizontal }
 

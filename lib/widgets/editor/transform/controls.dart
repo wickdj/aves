@@ -164,6 +164,8 @@ class RotationControlPanel extends StatelessWidget {
                 min: TransformController.straightenDegreesMin,
                 max: TransformController.straightenDegreesMax,
                 divisions: 18,
+                onChangeStart: (v) => controller.activity = TransformActivity.straighten,
+                onChangeEnd: (v) => controller.activity = TransformActivity.none,
                 label: NumberFormat('0.0°', context.l10n.localeName).format(transformation.straightenDegrees),
                 onChanged: (v) => controller.straightenDegrees = v,
               );

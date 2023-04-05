@@ -63,7 +63,10 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
                             entry: widget.entry,
                           ),
                         ),
-                        Cropper(viewStateNotifier: viewStateNotifier),
+                        Cropper(
+                          controller: _transformController,
+                          viewStateNotifier: viewStateNotifier,
+                        ),
                         PositionedDirectional(
                           start: 8,
                           bottom: 8,

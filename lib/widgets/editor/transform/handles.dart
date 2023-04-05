@@ -2,13 +2,16 @@ import 'package:aves/widgets/editor/transform/cropper.dart';
 import 'package:flutter/material.dart';
 
 class VertexHandle extends StatefulWidget {
-  final Offset Function() getPosition;
-  final void Function(Offset position) setPosition;
+  final ValueGetter<Offset> getPosition;
+  final ValueSetter<Offset> setPosition;
+  final VoidCallback onDragStart, onDragEnd;
 
   const VertexHandle({
     super.key,
     required this.getPosition,
     required this.setPosition,
+    required this.onDragStart,
+    required this.onDragEnd,
   });
 
   @override
@@ -33,10 +36,14 @@ class _VertexHandleState extends State<VertexHandle> {
         onPanStart: (details) {
           _totalDelta = Offset.zero;
           _start = widget.getPosition();
+          widget.onDragStart();
         },
         onPanUpdate: (details) {
           _totalDelta += details.delta;
           widget.setPosition(_start + _totalDelta);
+        },
+        onPanEnd: (details) {
+          widget.onDragEnd();
         },
         child: const ColoredBox(
           color: Colors.transparent,
@@ -47,13 +54,16 @@ class _VertexHandleState extends State<VertexHandle> {
 }
 
 class EdgeHandle extends StatefulWidget {
-  final Rect Function() getEdge;
-  final void Function(Rect edge) setEdge;
+  final ValueGetter<Rect> getEdge;
+  final ValueSetter<Rect> setEdge;
+  final VoidCallback onDragStart, onDragEnd;
 
   const EdgeHandle({
     super.key,
     required this.getEdge,
     required this.setEdge,
+    required this.onDragStart,
+    required this.onDragEnd,
   });
 
   @override
@@ -83,10 +93,14 @@ class _EdgeHandleState extends State<EdgeHandle> {
         onPanStart: (details) {
           _totalDelta = Offset.zero;
           _start = widget.getEdge();
+          widget.onDragStart();
         },
         onPanUpdate: (details) {
           _totalDelta += details.delta;
           widget.setEdge(Rect.fromLTWH(_start.left + _totalDelta.dx, _start.top + _totalDelta.dy, _start.width, _start.height));
+        },
+        onPanEnd: (details) {
+          widget.onDragEnd();
         },
         child: const ColoredBox(
           color: Colors.transparent,
