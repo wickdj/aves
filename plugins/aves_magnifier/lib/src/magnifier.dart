@@ -23,6 +23,7 @@ class AvesMagnifier extends StatelessWidget {
     super.key,
     required this.controller,
     required this.childSize,
+    this.velocityTransformer,
     this.allowOriginalScaleBeyondRange = true,
     this.minScale = const ScaleLevel(factor: .0),
     this.maxScale = const ScaleLevel(factor: double.infinity),
@@ -42,6 +43,8 @@ class AvesMagnifier extends StatelessWidget {
 
   // The size of the custom [child]. This value is used to compute the relation between the child and the container's size to calculate the scale value.
   final Size childSize;
+
+  final VelocityTransformer? velocityTransformer;
 
   final bool allowOriginalScaleBeyondRange;
 
@@ -81,6 +84,7 @@ class AvesMagnifier extends StatelessWidget {
           controller: controller,
           scaleStateCycle: scaleStateCycle,
           applyScale: applyScale,
+          velocityTransformer: velocityTransformer,
           onScaleStart: onScaleStart,
           onScaleUpdate: onScaleUpdate,
           onScaleEnd: onScaleEnd,

@@ -143,6 +143,13 @@ This change eventually prevents building the app with Flutter v3.3.3.
                 <data android:mimeType="vnd.android.cursor.dir/video" />
             </intent-filter>
             <intent-filter>
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="image/*" />
+                <data android:mimeType="vnd.android.cursor.dir/image" />
+            </intent-filter>
+            <intent-filter>
                 <action android:name="android.intent.action.GET_CONTENT" />
 
                 <category android:name="android.intent.category.OPENABLE" />

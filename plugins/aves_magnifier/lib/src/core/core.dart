@@ -14,6 +14,8 @@ import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:tuple/tuple.dart';
 
+typedef VelocityTransformer = Offset Function(Offset velocity);
+
 /// Internal widget in which controls all animations lifecycle, core responses
 /// to user gestures, updates to the controller state and mounts the entire Layout
 class MagnifierCore extends StatefulWidget {
@@ -21,6 +23,7 @@ class MagnifierCore extends StatefulWidget {
   final ScaleStateCycle scaleStateCycle;
   final bool applyScale;
   final double panInertia;
+  final VelocityTransformer velocityTransformer;
   final MagnifierGestureScaleStartCallback? onScaleStart;
   final MagnifierGestureScaleUpdateCallback? onScaleUpdate;
   final MagnifierGestureScaleEndCallback? onScaleEnd;
@@ -35,6 +38,7 @@ class MagnifierCore extends StatefulWidget {
     required this.scaleStateCycle,
     required this.applyScale,
     this.panInertia = .2,
+    VelocityTransformer? velocityTransformer,
     this.onScaleStart,
     this.onScaleUpdate,
     this.onScaleEnd,
@@ -42,7 +46,9 @@ class MagnifierCore extends StatefulWidget {
     this.onTap,
     this.onDoubleTap,
     required this.child,
-  });
+  }): velocityTransformer = velocityTransformer ?? defaultVelocityTransformer;
+
+  static Offset defaultVelocityTransformer(Offset velocity) => velocity;
 
   @override
   State<StatefulWidget> createState() => _MagnifierCoreState();
@@ -243,7 +249,7 @@ class _MagnifierCoreState extends State<MagnifierCore> with TickerProviderStateM
     if (isPanning) {
       final pps = details.velocity.pixelsPerSecond;
       if (pps != Offset.zero) {
-        final newPosition = clampPosition(position: _position + pps * widget.panInertia);
+        final newPosition = clampPosition(position: _position + widget.velocityTransformer(pps) * widget.panInertia);
         if (_position != newPosition) {
           final tween = Tween<Offset>(begin: _position, end: newPosition);
           const curve = Curves.easeOutCubic;

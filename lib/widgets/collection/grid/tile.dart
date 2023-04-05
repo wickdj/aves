@@ -58,6 +58,7 @@ class InteractiveTile extends StatelessWidget {
           case AppMode.setWallpaper:
           case AppMode.slideshow:
           case AppMode.view:
+          case AppMode.edit:
             break;
         }
       },

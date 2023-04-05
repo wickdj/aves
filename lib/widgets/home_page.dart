@@ -23,7 +23,9 @@ import 'package:aves/widgets/common/behaviour/routes.dart';
 import 'package:aves/widgets/common/extensions/build_context.dart';
 import 'package:aves/widgets/common/search/page.dart';
 import 'package:aves/widgets/common/search/route.dart';
+import 'package:aves/widgets/editor/entry_editor_page.dart';
 import 'package:aves/widgets/filter_grids/albums_page.dart';
+import 'package:aves/widgets/intent.dart';
 import 'package:aves/widgets/search/search_delegate.dart';
 import 'package:aves/widgets/settings/home_widget_settings_page.dart';
 import 'package:aves/widgets/settings/screen_saver_settings_page.dart';
@@ -57,26 +59,6 @@ class _HomePageState extends State<HomePage> {
   String? _initialRouteName, _initialSearchQuery;
   Set<CollectionFilter>? _initialFilters;
 
-  static const actionPickItems = 'pick_items';
-  static const actionPickCollectionFilters = 'pick_collection_filters';
-  static const actionScreenSaver = 'screen_saver';
-  static const actionScreenSaverSettings = 'screen_saver_settings';
-  static const actionSearch = 'search';
-  static const actionSetWallpaper = 'set_wallpaper';
-  static const actionView = 'view';
-  static const actionWidgetOpen = 'widget_open';
-  static const actionWidgetSettings = 'widget_settings';
-
-  static const intentDataKeyAction = 'action';
-  static const intentDataKeyAllowMultiple = 'allowMultiple';
-  static const intentDataKeyFilters = 'filters';
-  static const intentDataKeyMimeType = 'mimeType';
-  static const intentDataKeyPage = 'page';
-  static const intentDataKeyQuery = 'query';
-  static const intentDataKeySafeMode = 'safeMode';
-  static const intentDataKeyUri = 'uri';
-  static const intentDataKeyWidgetId = 'widgetId';
-
   static const allowedShortcutRoutes = [
     CollectionPage.routeName,
     AlbumListPage.routeName,
@@ -103,22 +85,27 @@ class _HomePageState extends State<HomePage> {
 
     var appMode = AppMode.main;
     final intentData = widget.intentData ?? await IntentService.getIntentData();
-    final safeMode = intentData[intentDataKeySafeMode] ?? false;
-    final intentAction = intentData[intentDataKeyAction];
+    final safeMode = intentData[IntentDataKeys.safeMode] ?? false;
+    final intentAction = intentData[IntentDataKeys.action];
     _initialFilters = null;
 
     await androidFileUtils.init();
-    if (!{actionScreenSaver, actionSetWallpaper}.contains(intentAction) && settings.isInstalledAppAccessAllowed) {
+    if (!{
+          IntentActions.edit,
+          IntentActions.screenSaver,
+          IntentActions.setWallpaper,
+        }.contains(intentAction) &&
+        settings.isInstalledAppAccessAllowed) {
       unawaited(appInventory.initAppNames());
     }
 
     if (intentData.isNotEmpty) {
       await reportService.log('Intent data=$intentData');
       switch (intentAction) {
-        case actionView:
-        case actionWidgetOpen:
+        case IntentActions.view:
+        case IntentActions.widgetOpen:
           String? uri, mimeType;
-          final widgetId = intentData[intentDataKeyWidgetId];
+          final widgetId = intentData[IntentDataKeys.widgetId];
           if (widgetId != null) {
             // widget settings may be modified in a different process after channel setup
             await settings.reload();
@@ -135,8 +122,8 @@ class _HomePageState extends State<HomePage> {
             }
             unawaited(WidgetService.update(widgetId));
           } else {
-            uri = intentData[intentDataKeyUri];
-            mimeType = intentData[intentDataKeyMimeType];
+            uri = intentData[IntentDataKeys.uri];
+            mimeType = intentData[IntentDataKeys.mimeType];
           }
           if (uri != null) {
             _viewerEntry = await _initViewerEntry(
@@ -148,48 +135,59 @@ class _HomePageState extends State<HomePage> {
             }
           }
           break;
-        case actionPickItems:
+        case IntentActions.edit:
+          _viewerEntry = await _initViewerEntry(
+            uri: intentData[IntentDataKeys.uri],
+            mimeType: intentData[IntentDataKeys.mimeType],
+          );
+          if (_viewerEntry != null) {
+            appMode = AppMode.edit;
+          }
+          break;
+        case IntentActions.setWallpaper:
+          _viewerEntry = await _initViewerEntry(
+            uri: intentData[IntentDataKeys.uri],
+            mimeType: intentData[IntentDataKeys.mimeType],
+          );
+          if (_viewerEntry != null) {
+            appMode = AppMode.setWallpaper;
+          }
+          break;
+        case IntentActions.pickItems:
           // TODO TLAD apply pick mimetype(s)
           // some apps define multiple types, separated by a space (maybe other signs too, like `,` `;`?)
-          String? pickMimeTypes = intentData[intentDataKeyMimeType];
-          final multiple = intentData[intentDataKeyAllowMultiple] ?? false;
+          String? pickMimeTypes = intentData[IntentDataKeys.mimeType];
+          final multiple = intentData[IntentDataKeys.allowMultiple] ?? false;
           debugPrint('pick mimeType=$pickMimeTypes multiple=$multiple');
           appMode = multiple ? AppMode.pickMultipleMediaExternal : AppMode.pickSingleMediaExternal;
           break;
-        case actionPickCollectionFilters:
+        case IntentActions.pickCollectionFilters:
           appMode = AppMode.pickCollectionFiltersExternal;
           break;
-        case actionScreenSaver:
+        case IntentActions.screenSaver:
           appMode = AppMode.screenSaver;
           _initialRouteName = ScreenSaverPage.routeName;
           break;
-        case actionScreenSaverSettings:
+        case IntentActions.screenSaverSettings:
           _initialRouteName = ScreenSaverSettingsPage.routeName;
           break;
-        case actionSearch:
+        case IntentActions.search:
           _initialRouteName = SearchPage.routeName;
-          _initialSearchQuery = intentData[intentDataKeyQuery];
+          _initialSearchQuery = intentData[IntentDataKeys.query];
           break;
-        case actionSetWallpaper:
-          appMode = AppMode.setWallpaper;
-          _viewerEntry = await _initViewerEntry(
-            uri: intentData[intentDataKeyUri],
-            mimeType: intentData[intentDataKeyMimeType],
-          );
-          break;
-        case actionWidgetSettings:
+        case IntentActions.widgetSettings:
           _initialRouteName = HomeWidgetSettingsPage.routeName;
-          _widgetId = intentData[intentDataKeyWidgetId] ?? 0;
+          _widgetId = intentData[IntentDataKeys.widgetId] ?? 0;
           break;
         default:
           // do not use 'route' as extra key, as the Flutter framework acts on it
-          final extraRoute = intentData[intentDataKeyPage];
+          final extraRoute = intentData[IntentDataKeys.page];
           if (allowedShortcutRoutes.contains(extraRoute)) {
             _initialRouteName = extraRoute;
           }
       }
       if (_initialFilters == null) {
-        final extraFilters = intentData[intentDataKeyFilters];
+        final extraFilters = intentData[IntentDataKeys.filters];
         _initialFilters = extraFilters != null ? (extraFilters as List).cast<String>().map(CollectionFilter.fromJson).whereNotNull().toSet() : null;
       }
     }
@@ -231,6 +229,7 @@ class _HomePageState extends State<HomePage> {
           await _initViewerEssentials();
         }
         break;
+      case AppMode.edit:
       case AppMode.setWallpaper:
         await _initViewerEssentials();
         break;
@@ -271,68 +270,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<Route> _getRedirectRoute(AppMode appMode) async {
-    if (appMode == AppMode.setWallpaper) {
-      return DirectMaterialPageRoute(
-        settings: const RouteSettings(name: WallpaperPage.routeName),
-        builder: (_) {
-          return WallpaperPage(
-            entry: _viewerEntry,
-          );
-        },
-      );
-    }
-
-    if (appMode == AppMode.view) {
-      AvesEntry viewerEntry = _viewerEntry!;
-      CollectionLens? collection;
-
-      final source = context.read<CollectionSource>();
-      if (source.initState != SourceInitializationState.none) {
-        final album = viewerEntry.directory;
-        if (album != null) {
-          // wait for collection to pass the `loading` state
-          final completer = Completer();
-          void _onSourceStateChanged() {
-            if (source.state != SourceState.loading) {
-              source.stateNotifier.removeListener(_onSourceStateChanged);
-              completer.complete();
-            }
-          }
-
-          source.stateNotifier.addListener(_onSourceStateChanged);
-          await completer.future;
-
-          collection = CollectionLens(
-            source: source,
-            filters: {AlbumFilter(album, source.getAlbumDisplayName(context, album))},
-            listenToSource: false,
-            // if we group bursts, opening a burst sub-entry should:
-            // - identify and select the containing main entry,
-            // - select the sub-entry in the Viewer page.
-            groupBursts: false,
-          );
-          final viewerEntryPath = viewerEntry.path;
-          final collectionEntry = collection.sortedEntries.firstWhereOrNull((entry) => entry.path == viewerEntryPath);
-          if (collectionEntry != null) {
-            viewerEntry = collectionEntry;
-          } else {
-            debugPrint('collection does not contain viewerEntry=$viewerEntry');
-            collection = null;
-          }
-        }
-      }
-
-      return DirectMaterialPageRoute(
-        settings: const RouteSettings(name: EntryViewerPage.routeName),
-        builder: (_) {
-          return EntryViewerPage(
-            collection: collection,
-            initialEntry: viewerEntry,
-          );
-        },
-      );
-    }
-
     String routeName;
     Set<CollectionFilter?>? filters;
     switch (appMode) {
@@ -340,7 +277,79 @@ class _HomePageState extends State<HomePage> {
       case AppMode.pickMultipleMediaExternal:
         routeName = CollectionPage.routeName;
         break;
-      default:
+      case AppMode.setWallpaper:
+        return DirectMaterialPageRoute(
+          settings: const RouteSettings(name: WallpaperPage.routeName),
+          builder: (_) {
+            return WallpaperPage(
+              entry: _viewerEntry,
+            );
+          },
+        );
+      case AppMode.view:
+        AvesEntry viewerEntry = _viewerEntry!;
+        CollectionLens? collection;
+
+        final source = context.read<CollectionSource>();
+        if (source.initState != SourceInitializationState.none) {
+          final album = viewerEntry.directory;
+          if (album != null) {
+            // wait for collection to pass the `loading` state
+            final completer = Completer();
+            void _onSourceStateChanged() {
+              if (source.state != SourceState.loading) {
+                source.stateNotifier.removeListener(_onSourceStateChanged);
+                completer.complete();
+              }
+            }
+
+            source.stateNotifier.addListener(_onSourceStateChanged);
+            await completer.future;
+
+            collection = CollectionLens(
+              source: source,
+              filters: {AlbumFilter(album, source.getAlbumDisplayName(context, album))},
+              listenToSource: false,
+              // if we group bursts, opening a burst sub-entry should:
+              // - identify and select the containing main entry,
+              // - select the sub-entry in the Viewer page.
+              groupBursts: false,
+            );
+            final viewerEntryPath = viewerEntry.path;
+            final collectionEntry = collection.sortedEntries.firstWhereOrNull((entry) => entry.path == viewerEntryPath);
+            if (collectionEntry != null) {
+              viewerEntry = collectionEntry;
+            } else {
+              debugPrint('collection does not contain viewerEntry=$viewerEntry');
+              collection = null;
+            }
+          }
+        }
+
+        return DirectMaterialPageRoute(
+          settings: const RouteSettings(name: EntryViewerPage.routeName),
+          builder: (_) {
+            return EntryViewerPage(
+              collection: collection,
+              initialEntry: viewerEntry,
+            );
+          },
+        );
+      case AppMode.edit:
+        return DirectMaterialPageRoute(
+          settings: const RouteSettings(name: EntryViewerPage.routeName),
+          builder: (_) {
+            return ImageEditorPage(
+              entry: _viewerEntry!,
+            );
+          },
+        );
+      case AppMode.main:
+      case AppMode.pickCollectionFiltersExternal:
+      case AppMode.pickMediaInternal:
+      case AppMode.pickFilterInternal:
+      case AppMode.screenSaver:
+      case AppMode.slideshow:
         routeName = _initialRouteName ?? settings.homePage.routeName;
         filters = _initialFilters ?? {};
         break;

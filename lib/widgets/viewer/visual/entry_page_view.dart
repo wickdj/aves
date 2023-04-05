@@ -37,6 +37,8 @@ class EntryPageView extends StatefulWidget {
   final VoidCallback? onDisposed;
 
   static const decorationCheckSize = 20.0;
+  static const rasterMaxScale = ScaleLevel(factor: 5);
+  static const vectorMaxScale = ScaleLevel(factor: 25);
 
   const EntryPageView({
     super.key,
@@ -62,9 +64,6 @@ class _EntryPageViewState extends State<EntryPageView> with SingleTickerProvider
   AvesEntry get entry => widget.pageEntry;
 
   ViewerController get viewerController => widget.viewerController;
-
-  static const rasterMaxScale = ScaleLevel(factor: 5);
-  static const vectorMaxScale = ScaleLevel(factor: 25);
 
   @override
   void initState() {
@@ -180,7 +179,7 @@ class _EntryPageViewState extends State<EntryPageView> with SingleTickerProvider
 
   Widget _buildSvgView() {
     return _buildMagnifier(
-      maxScale: vectorMaxScale,
+      maxScale: EntryPageView.vectorMaxScale,
       scaleStateCycle: _vectorScaleStateCycle,
       applyScale: false,
       child: VectorImageView(
@@ -382,7 +381,7 @@ class _EntryPageViewState extends State<EntryPageView> with SingleTickerProvider
   Widget _buildMagnifier({
     AvesMagnifierController? controller,
     Size? displaySize,
-    ScaleLevel maxScale = rasterMaxScale,
+    ScaleLevel maxScale = EntryPageView.rasterMaxScale,
     ScaleStateCycle scaleStateCycle = defaultScaleStateCycle,
     bool applyScale = true,
     MagnifierGestureScaleStartCallback? onScaleStart,
