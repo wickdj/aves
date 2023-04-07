@@ -2,12 +2,13 @@ import 'dart:async';
 
 import 'package:aves/model/entry/entry.dart';
 import 'package:aves/utils/vector_utils.dart';
+import 'package:aves/widgets/editor/transform/controller.dart';
 import 'package:aves/widgets/editor/transform/transformation.dart';
 import 'package:aves/widgets/viewer/visual/conductor.dart';
 import 'package:aves/widgets/viewer/visual/entry_page_view.dart';
 import 'package:aves/widgets/viewer/visual/error.dart';
 import 'package:aves/widgets/viewer/visual/raster.dart';
-import 'package:aves/widgets/viewer/visual/state.dart';
+import 'package:aves/model/view_state.dart';
 import 'package:aves_magnifier/aves_magnifier.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

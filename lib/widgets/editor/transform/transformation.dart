@@ -1,115 +1,42 @@
-import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:aves/widgets/editor/transform/crop_region.dart';
 import 'package:aves_model/aves_model.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
-
-class TransformController {
-  ValueNotifier<CropAspectRatio> aspectRatioNotifier = ValueNotifier(CropAspectRatio.free);
-
-  Transformation _transformation = Transformation.zero;
-
-  Transformation get transformation => _transformation;
-
-  bool get modified => _transformation != Transformation.zero;
-
-  final StreamController<Transformation> _transformationStreamController = StreamController.broadcast();
-
-  Stream<Transformation> get transformationStream => _transformationStreamController.stream;
-
-  final StreamController<TransformEvent> _eventStreamController = StreamController.broadcast();
-
-  Stream<TransformEvent> get eventStream => _eventStreamController.stream;
-
-  static const double straightenDegreesMin = -45;
-  static const double straightenDegreesMax = 45;
-
-  final Size displaySize;
-
-  TransformController(this.displaySize) {
-    reset();
-    aspectRatioNotifier.addListener(_onAspectRatioChanged);
-  }
-
-  void dispose() {
-    aspectRatioNotifier.dispose();
-  }
-
-  void reset() {
-    _transformation = Transformation.zero.copyWith(
-      cropImageRect: Rect.fromLTWH(0, 0, displaySize.width, displaySize.height),
-    );
-    _transformationStreamController.add(_transformation);
-  }
-
-  void flip() {
-    _transformation = _transformation.copyWith(
-      orientation: _transformation.orientation.flip(),
-      straightenDegrees: -transformation.straightenDegrees,
-    );
-    _transformationStreamController.add(_transformation);
-  }
-
-  void rotateClockwise() {
-    _transformation = _transformation.copyWith(
-      orientation: _transformation.orientation.rotateClockwise(),
-    );
-    _transformationStreamController.add(_transformation);
-  }
-
-  set straightenDegrees(double straightenDegrees) {
-    _transformation = _transformation.copyWith(
-      straightenDegrees: straightenDegrees.clamp(straightenDegreesMin, straightenDegreesMax),
-    );
-    _transformationStreamController.add(_transformation);
-  }
-
-  set cropImageRect(Rect rect) {
-    _transformation = _transformation.copyWith(
-      cropImageRect: rect,
-    );
-    _transformationStreamController.add(_transformation);
-  }
-  
-  set activity(TransformActivity activity) => _eventStreamController.add(TransformEvent(activity: activity));
-
-  void _onAspectRatioChanged() {
-    // TODO TLAD [crop] apply
-  }
-}
+import 'package:vector_math/vector_math_64.dart';
 
 @immutable
 class Transformation extends Equatable {
   final TransformOrientation orientation;
   final double straightenDegrees;
-  final Rect cropImageRect;
+  final CropRegion region;
 
   @override
-  List<Object?> get props => [orientation, straightenDegrees, cropImageRect];
+  List<Object?> get props => [orientation, straightenDegrees, region];
 
   static const zero = Transformation(
     orientation: TransformOrientation.normal,
     straightenDegrees: 0,
-    cropImageRect: Rect.zero,
+    region: CropRegion.zero,
   );
 
   const Transformation({
     required this.orientation,
     required this.straightenDegrees,
-    required this.cropImageRect,
+    required this.region,
   });
 
   Transformation copyWith({
     TransformOrientation? orientation,
     double? straightenDegrees,
-    Rect? cropImageRect,
+    CropRegion? region,
   }) {
     return Transformation(
       orientation: orientation ?? this.orientation,
       straightenDegrees: straightenDegrees ?? this.straightenDegrees,
-      cropImageRect: cropImageRect ?? this.cropImageRect,
+      region: region ?? this.region,
     );
   }
 
@@ -159,12 +86,8 @@ class TransformEvent {
   });
 }
 
-enum TransformActivity { none, resize, straighten }
-
-enum TransformOrientation { normal, rotate90, rotate180, rotate270, transverse, flipVertical, transpose, flipHorizontal }
-
 extension ExtraTransformOrientation on TransformOrientation {
-  TransformOrientation flip() {
+  TransformOrientation flipHorizontally() {
     switch (this) {
       case TransformOrientation.normal:
         return TransformOrientation.flipHorizontal;

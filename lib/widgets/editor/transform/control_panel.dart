@@ -4,7 +4,8 @@ import 'package:aves/view/view.dart';
 import 'package:aves/widgets/common/extensions/build_context.dart';
 import 'package:aves/widgets/common/identity/buttons/captioned_button.dart';
 import 'package:aves/widgets/common/identity/buttons/overlay_button.dart';
-import 'package:aves/widgets/editor/controls.dart';
+import 'package:aves/widgets/editor/control_panel.dart';
+import 'package:aves/widgets/editor/transform/controller.dart';
 import 'package:aves/widgets/editor/transform/transformation.dart';
 import 'package:aves_model/aves_model.dart';
 import 'package:collection/collection.dart';
@@ -90,14 +91,15 @@ class _TransformControlPanelState extends State<TransformControlPanel> with Tick
             ),
             OverlayButton(
               child: StreamBuilder<Transformation>(
-                  stream: transformController.transformationStream,
-                  builder: (context, snapshot) {
-                    return IconButton(
-                      icon: const Icon(AIcons.apply),
-                      onPressed: transformController.modified ? () => widget.onApply(transformController.transformation) : null,
-                      tooltip: context.l10n.applyTooltip,
-                    );
-                  }),
+                stream: transformController.transformationStream,
+                builder: (context, snapshot) {
+                  return IconButton(
+                    icon: const Icon(AIcons.apply),
+                    onPressed: transformController.modified ? () => widget.onApply(transformController.transformation) : null,
+                    tooltip: context.l10n.applyTooltip,
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -125,15 +127,16 @@ class CropControlPanel extends StatelessWidget {
         return CaptionedButton(
           iconButtonBuilder: (context, focusNode) {
             return ValueListenableBuilder<CropAspectRatio>(
-                valueListenable: aspectRatioNotifier,
-                builder: (context, selectedRatio, child) {
-                  return IconButton(
-                    color: ratio == selectedRatio ? Theme.of(context).colorScheme.primary : null,
-                    onPressed: setAspectRatio,
-                    focusNode: focusNode,
-                    icon: ratio.getIcon(),
-                  );
-                });
+              valueListenable: aspectRatioNotifier,
+              builder: (context, selectedRatio, child) {
+                return IconButton(
+                  color: ratio == selectedRatio ? Theme.of(context).colorScheme.primary : null,
+                  onPressed: setAspectRatio,
+                  focusNode: focusNode,
+                  icon: ratio.getIcon(),
+                );
+              },
+            );
           },
           caption: ratio.getText(context),
           onPressed: setAspectRatio,
@@ -153,7 +156,7 @@ class RotationControlPanel extends StatelessWidget {
 
     return Row(
       children: [
-        _buildButton(context, EntryAction.flip, controller.flip),
+        _buildButton(context, EntryAction.flip, controller.flipHorizontally),
         Expanded(
           child: StreamBuilder<Transformation>(
             stream: controller.transformationStream,

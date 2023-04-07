@@ -1,8 +1,9 @@
 import 'dart:math';
 
 import 'package:aves/utils/vector_utils.dart';
+import 'package:aves/widgets/editor/transform/controller.dart';
 import 'package:aves/widgets/editor/transform/transformation.dart';
-import 'package:aves/widgets/viewer/visual/state.dart';
+import 'package:aves/model/view_state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

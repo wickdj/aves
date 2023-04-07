@@ -5,7 +5,7 @@ import 'package:aves/model/settings/settings.dart';
 import 'package:aves/widgets/common/basic/text/background_painter.dart';
 import 'package:aves/widgets/common/basic/text/outlined.dart';
 import 'package:aves_video/aves_video.dart';
-import 'package:aves/widgets/viewer/visual/state.dart';
+import 'package:aves/model/view_state.dart';
 import 'package:aves/widgets/viewer/visual/video/subtitle/ass_parser.dart';
 import 'package:aves/widgets/viewer/visual/video/subtitle/span.dart';
 import 'package:aves/widgets/viewer/visual/video/subtitle/style.dart';

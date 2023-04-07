@@ -18,7 +18,7 @@ import 'package:aves/widgets/viewer/video/conductor.dart';
 import 'package:aves/widgets/viewer/visual/conductor.dart';
 import 'package:aves/widgets/viewer/visual/error.dart';
 import 'package:aves/widgets/viewer/visual/raster.dart';
-import 'package:aves/widgets/viewer/visual/state.dart';
+import 'package:aves/model/view_state.dart';
 import 'package:aves/widgets/viewer/visual/vector.dart';
 import 'package:aves/widgets/viewer/visual/video/cover.dart';
 import 'package:aves/widgets/viewer/visual/video/subtitle/subtitle.dart';

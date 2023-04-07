@@ -1,3 +1,4 @@
+import 'package:aves/utils/vector_utils.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
 
@@ -36,5 +37,29 @@ class ViewState extends Equatable {
       viewportSize: viewportSize ?? this.viewportSize,
       contentSize: contentSize ?? this.contentSize,
     );
+  }
+
+  Matrix4 get _contentToViewportMatrix {
+    final _viewportSize = viewportSize ?? Size.zero;
+    final _contentSize = contentSize ?? Size.zero;
+    final _scale = scale ?? 1.0;
+
+    final scaledContentSize = _contentSize * _scale;
+    final viewOffset = _viewportSize.center(Offset.zero) - scaledContentSize.center(Offset.zero);
+
+    return Matrix4.identity()
+      ..translate(position.dx, position.dy)
+      ..translate(viewOffset.dx, viewOffset.dy)
+      ..scale(_scale, _scale, 1);
+  }
+
+  Offset toViewportPoint(Offset contentPoint) {
+    final matrix = _contentToViewportMatrix;
+    return matrix.transform3(contentPoint.toVector3).toOffset;
+  }
+
+  Offset toContentPoint(Offset viewportPoint) {
+    final matrix = _contentToViewportMatrix..invert();
+    return matrix.transform3(viewportPoint.toVector3).toOffset;
   }
 }
