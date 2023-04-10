@@ -486,7 +486,7 @@ class _EntryPageViewState extends State<EntryPageView> with SingleTickerProvider
   void _onViewScaleBoundariesChanged(ScaleBoundaries v) {
     _viewStateNotifier.value = _viewStateNotifier.value.copyWith(
       viewportSize: v.viewportSize,
-      contentSize: v.childSize,
+      contentSize: v.contentSize,
     );
   }
 

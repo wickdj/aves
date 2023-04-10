@@ -124,7 +124,7 @@ class AvesMagnifierController {
       case ScaleState.zoomedOut:
         return _clamp(boundaries.initialScale);
       case ScaleState.covering:
-        return _clamp(ScaleLevel.scaleForCovering(boundaries.viewportSize, boundaries.childSize));
+        return _clamp(ScaleLevel.scaleForCovering(boundaries.viewportSize, boundaries.contentSize));
       case ScaleState.originalSize:
         return _clamp(boundaries.originalScale);
       default:

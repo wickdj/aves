@@ -7,7 +7,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 
 /// Internal class to wrap custom scale boundaries (min, max and initial)
-/// Also, stores values regarding the two sizes: the container and the child.
+/// Also, stores values regarding the two sizes: the container and the content.
 @immutable
 class ScaleBoundaries extends Equatable {
   final bool _allowOriginalScaleBeyondRange;
@@ -15,10 +15,10 @@ class ScaleBoundaries extends Equatable {
   final ScaleLevel _maxScale;
   final ScaleLevel _initialScale;
   final Size viewportSize;
-  final Size childSize;
+  final Size contentSize;
 
   @override
-  List<Object?> get props => [_allowOriginalScaleBeyondRange, _minScale, _maxScale, _initialScale, viewportSize, childSize];
+  List<Object?> get props => [_allowOriginalScaleBeyondRange, _minScale, _maxScale, _initialScale, viewportSize, contentSize];
 
   const ScaleBoundaries({
     required bool allowOriginalScaleBeyondRange,
@@ -26,14 +26,14 @@ class ScaleBoundaries extends Equatable {
     required ScaleLevel maxScale,
     required ScaleLevel initialScale,
     required this.viewportSize,
-    required this.childSize,
+    required this.contentSize,
   })  : _allowOriginalScaleBeyondRange = allowOriginalScaleBeyondRange,
         _minScale = minScale,
         _maxScale = maxScale,
         _initialScale = initialScale;
 
   ScaleBoundaries copyWith({
-    Size? childSize,
+    Size? contentSize,
   }) {
     return ScaleBoundaries(
       allowOriginalScaleBeyondRange: _allowOriginalScaleBeyondRange,
@@ -41,7 +41,7 @@ class ScaleBoundaries extends Equatable {
       maxScale: _maxScale,
       initialScale: _initialScale,
       viewportSize: viewportSize,
-      childSize: childSize ?? this.childSize,
+      contentSize: contentSize ?? this.contentSize,
     );
   }
 
@@ -49,9 +49,9 @@ class ScaleBoundaries extends Equatable {
     final factor = level.factor;
     switch (level.ref) {
       case ScaleReference.contained:
-        return factor * ScaleLevel.scaleForContained(viewportSize, childSize);
+        return factor * ScaleLevel.scaleForContained(viewportSize, contentSize);
       case ScaleReference.covered:
-        return factor * ScaleLevel.scaleForCovering(viewportSize, childSize);
+        return factor * ScaleLevel.scaleForCovering(viewportSize, contentSize);
       case ScaleReference.absolute:
       default:
         return factor;
@@ -76,17 +76,17 @@ class ScaleBoundaries extends Equatable {
 
   Offset get _viewportCenter => viewportSize.center(Offset.zero);
 
-  Offset get _childCenter => childSize.center(Offset.zero);
+  Offset get _contentCenter => contentSize.center(Offset.zero);
 
   Offset viewportToStatePosition(AvesMagnifierController controller, Offset viewportPosition) {
     return viewportPosition - _viewportCenter - controller.position;
   }
 
-  Offset viewportToChildPosition(AvesMagnifierController controller, Offset viewportPosition) {
-    return viewportToStatePosition(controller, viewportPosition) / controller.scale! + _childCenter;
+  Offset viewportToContentPosition(AvesMagnifierController controller, Offset viewportPosition) {
+    return viewportToStatePosition(controller, viewportPosition) / controller.scale! + _contentCenter;
   }
 
-  Offset childToStatePosition(double scale, Offset childPosition) {
-    return (_childCenter - childPosition) * scale;
+  Offset contentToStatePosition(double scale, Offset contentPosition) {
+    return (_contentCenter - contentPosition) * scale;
   }
 }

@@ -9,6 +9,10 @@ import 'package:flutter/foundation.dart';
 class TransformController {
   ValueNotifier<CropAspectRatio> aspectRatioNotifier = ValueNotifier(CropAspectRatio.free);
 
+  TransformActivity _activity = TransformActivity.none;
+
+  TransformActivity get activity => _activity;
+
   Transformation _transformation = Transformation.zero;
 
   Transformation get transformation => _transformation;
@@ -39,12 +43,7 @@ class TransformController {
 
   void reset() {
     _transformation = Transformation.zero.copyWith(
-      region: CropRegion(
-        topLeft: Offset.zero,
-        topRight: Offset(displaySize.width, 0),
-        bottomRight: Offset(displaySize.width, displaySize.height),
-        bottomLeft: Offset(0, displaySize.height),
-      ),
+      region: CropRegion.fromRect(Rect.fromLTWH(0, 0, displaySize.width, displaySize.height)),
     );
     _transformationStreamController.add(_transformation);
   }
@@ -72,14 +71,16 @@ class TransformController {
   }
 
   set cropRegion(CropRegion region) {
-    debugPrint('TLAD setCropRegion region=$region');
     _transformation = _transformation.copyWith(
       region: region,
     );
     _transformationStreamController.add(_transformation);
   }
 
-  set activity(TransformActivity activity) => _eventStreamController.add(TransformEvent(activity: activity));
+  set activity(TransformActivity activity) {
+    _activity = activity;
+    _eventStreamController.add(TransformEvent(activity: _activity));
+  }
 
   void _onAspectRatioChanged() {
     // TODO TLAD [crop] apply

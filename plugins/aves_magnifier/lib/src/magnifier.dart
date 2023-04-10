@@ -25,6 +25,8 @@ class AvesMagnifier extends StatelessWidget {
     required this.childSize,
     this.velocityTransformer,
     this.allowOriginalScaleBeyondRange = true,
+    this.allowGestureScaleBeyondRange = true,
+    this.panInertia = defaultPanInertia,
     this.minScale = const ScaleLevel(factor: .0),
     this.maxScale = const ScaleLevel(factor: double.infinity),
     this.initialScale = const ScaleLevel(ref: ScaleReference.contained),
@@ -39,6 +41,8 @@ class AvesMagnifier extends StatelessWidget {
     required this.child,
   });
 
+  static const double defaultPanInertia = .2;
+
   final AvesMagnifierController controller;
 
   // The size of the custom [child]. This value is used to compute the relation between the child and the container's size to calculate the scale value.
@@ -47,6 +51,8 @@ class AvesMagnifier extends StatelessWidget {
   final VelocityTransformer? velocityTransformer;
 
   final bool allowOriginalScaleBeyondRange;
+  final bool allowGestureScaleBeyondRange;
+  final double panInertia;
 
   // Defines the minimum size in which the image will be allowed to assume, it is proportional to the original image size.
   final ScaleLevel minScale;
@@ -77,13 +83,15 @@ class AvesMagnifier extends StatelessWidget {
           maxScale: maxScale,
           initialScale: initialScale,
           viewportSize: constraints.biggest,
-          childSize: childSize.isEmpty == false ? childSize : constraints.biggest,
+          contentSize: childSize.isEmpty == false ? childSize : constraints.biggest,
         ));
 
         return MagnifierCore(
           controller: controller,
           scaleStateCycle: scaleStateCycle,
           applyScale: applyScale,
+          allowGestureScaleBeyondRange: allowGestureScaleBeyondRange,
+          panInertia: panInertia,
           velocityTransformer: velocityTransformer,
           onScaleStart: onScaleStart,
           onScaleUpdate: onScaleUpdate,

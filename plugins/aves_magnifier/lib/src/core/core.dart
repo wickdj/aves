@@ -21,7 +21,7 @@ typedef VelocityTransformer = Offset Function(Offset velocity);
 class MagnifierCore extends StatefulWidget {
   final AvesMagnifierController controller;
   final ScaleStateCycle scaleStateCycle;
-  final bool applyScale;
+  final bool applyScale, allowGestureScaleBeyondRange;
   final double panInertia;
   final VelocityTransformer velocityTransformer;
   final MagnifierGestureScaleStartCallback? onScaleStart;
@@ -37,7 +37,8 @@ class MagnifierCore extends StatefulWidget {
     required this.controller,
     required this.scaleStateCycle,
     required this.applyScale,
-    this.panInertia = .2,
+    required this.allowGestureScaleBeyondRange,
+    required this.panInertia,
     VelocityTransformer? velocityTransformer,
     this.onScaleStart,
     this.onScaleUpdate,
@@ -46,7 +47,7 @@ class MagnifierCore extends StatefulWidget {
     this.onTap,
     this.onDoubleTap,
     required this.child,
-  }): velocityTransformer = velocityTransformer ?? defaultVelocityTransformer;
+  }) : velocityTransformer = velocityTransformer ?? defaultVelocityTransformer;
 
   static Offset defaultVelocityTransformer(Offset velocity) => velocity;
 
@@ -177,18 +178,21 @@ class _MagnifierCoreState extends State<MagnifierCore> with TickerProviderStateM
     } else {
       newScale = _startScale! * details.scale;
     }
+    if (!widget.allowGestureScaleBeyondRange) {
+      newScale = newScale.clamp(boundaries.minScale, boundaries.maxScale);
+    }
+    newScale = max(0, newScale);
     final scaleFocalPoint = _doubleTap ? _startFocalPoint! : details.localFocalPoint;
 
     final panPositionDelta = scaleFocalPoint - _lastViewportFocalPosition!;
     final scalePositionDelta = boundaries.viewportToStatePosition(controller, scaleFocalPoint) * (scale! / newScale - 1);
-    final newPosition = position + panPositionDelta + scalePositionDelta;
+    final newPosition = clampPosition(
+      position: position + panPositionDelta + scalePositionDelta,
+      scale: newScale,
+    );
 
     updateScaleStateFromNewScale(newScale, ChangeSource.gesture);
-    updateMultiple(
-      scale: max(0, newScale),
-      position: newPosition,
-      source: ChangeSource.gesture,
-    );
+    controller.update(position: newPosition, scale: newScale, source: ChangeSource.gesture);
 
     _lastViewportFocalPosition = scaleFocalPoint;
   }
@@ -314,7 +318,7 @@ class _MagnifierCoreState extends State<MagnifierCore> with TickerProviderStateM
     final viewportTapPosition = details.localPosition;
     final viewportSize = boundaries.viewportSize;
     final alignment = Alignment(viewportTapPosition.dx / viewportSize.width, viewportTapPosition.dy / viewportSize.height);
-    final childTapPosition = boundaries.viewportToChildPosition(controller, viewportTapPosition);
+    final childTapPosition = boundaries.viewportToContentPosition(controller, viewportTapPosition);
 
     onTap(context, controller.currentState, alignment, childTapPosition);
   }
@@ -331,7 +335,7 @@ class _MagnifierCoreState extends State<MagnifierCore> with TickerProviderStateM
       if (onDoubleTap(alignment) == true) return;
     }
 
-    final childTapPosition = boundaries.viewportToChildPosition(controller, viewportTapPosition);
+    final childTapPosition = boundaries.viewportToContentPosition(controller, viewportTapPosition);
     nextScaleState(ChangeSource.gesture, childFocalPoint: childTapPosition);
   }
 
@@ -391,7 +395,7 @@ class _MagnifierCoreState extends State<MagnifierCore> with TickerProviderStateM
 
         Widget child = CustomSingleChildLayout(
           delegate: _CenterWithOriginalSizeDelegate(
-            boundaries.childSize,
+            boundaries.contentSize,
             basePosition,
             applyScale,
           ),

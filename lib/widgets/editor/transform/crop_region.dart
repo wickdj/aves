@@ -9,7 +9,17 @@ import 'package:flutter/foundation.dart';
 class CropRegion extends Equatable {
   final Offset topLeft, topRight, bottomRight, bottomLeft;
 
-  Set<Offset> get corners => {topLeft, topRight, bottomRight, bottomLeft};
+  List<Offset> get corners => [topLeft, topRight, bottomRight, bottomLeft];
+
+  Offset get center => (topLeft + bottomRight) / 2;
+
+  Rect get outsideRect {
+    final xMin = corners.map((v) => v.dx).min;
+    final xMax = corners.map((v) => v.dx).max;
+    final yMin = corners.map((v) => v.dy).min;
+    final yMax = corners.map((v) => v.dy).max;
+    return Rect.fromPoints(Offset(xMin, yMin), Offset(xMax, yMax));
+  }
 
   @override
   List<Object?> get props => [topLeft, topRight, bottomRight, bottomLeft];
@@ -27,6 +37,15 @@ class CropRegion extends Equatable {
     bottomRight: Offset.zero,
     bottomLeft: Offset.zero,
   );
+
+  factory CropRegion.fromRect(Rect rect) {
+    return CropRegion(
+      topLeft: rect.topLeft,
+      topRight: rect.topRight,
+      bottomRight: rect.bottomRight,
+      bottomLeft: rect.bottomLeft,
+    );
+  }
 
   factory CropRegion.fromOutline(ViewState viewState, Rect outline) {
     final points = [

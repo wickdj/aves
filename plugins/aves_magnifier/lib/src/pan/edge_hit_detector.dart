@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 mixin EdgeHitDetector on AvesMagnifierControllerDelegate {
-  // the child width/height is not accurate for some image size & scale combos
+  // the content width/height is not accurate for some image size & scale combos
   // e.g. 3580.0 * 0.1005586592178771 yields 360.0
   // but 4764.0 * 0.07556675062972293 yields 360.00000000000006
   // so be sure to compare with `precisionErrorTolerance`
@@ -12,9 +12,9 @@ mixin EdgeHitDetector on AvesMagnifierControllerDelegate {
     final boundaries = scaleBoundaries;
     if (boundaries == null) return const EdgeHit(false, false);
 
-    final childWidth = boundaries.childSize.width * scale!;
+    final contentWidth = boundaries.contentSize.width * scale!;
     final viewportWidth = boundaries.viewportSize.width;
-    if (viewportWidth + precisionErrorTolerance >= childWidth) {
+    if (viewportWidth + precisionErrorTolerance >= contentWidth) {
       return const EdgeHit(true, true);
     }
     final x = -position.dx;
@@ -26,9 +26,9 @@ mixin EdgeHitDetector on AvesMagnifierControllerDelegate {
     final boundaries = scaleBoundaries;
     if (boundaries == null) return const EdgeHit(false, false);
 
-    final childHeight = boundaries.childSize.height * scale!;
+    final contentHeight = boundaries.contentSize.height * scale!;
     final viewportHeight = boundaries.viewportSize.height;
-    if (viewportHeight + precisionErrorTolerance >= childHeight) {
+    if (viewportHeight + precisionErrorTolerance >= contentHeight) {
       return const EdgeHit(true, true);
     }
     final y = -position.dy;

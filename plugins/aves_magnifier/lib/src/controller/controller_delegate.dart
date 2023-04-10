@@ -54,7 +54,7 @@ mixin AvesMagnifierControllerDelegate on State<MagnifierCore> {
       final childFocalPoint = scaleStateChange.childFocalPoint;
       final boundaries = scaleBoundaries;
       if (childFocalPoint != null && boundaries != null) {
-        nextPosition = boundaries.childToStatePosition(nextScale!, childFocalPoint);
+        nextPosition = boundaries.contentToStatePosition(nextScale!, childFocalPoint);
       }
     }
 
@@ -100,14 +100,6 @@ mixin AvesMagnifierControllerDelegate on State<MagnifierCore> {
 
   void setScale(double? scale, ChangeSource source) => controller.update(scale: scale, source: source);
 
-  void updateMultiple({
-    required Offset position,
-    required double scale,
-    required ChangeSource source,
-  }) {
-    controller.update(position: position, scale: scale, source: source);
-  }
-
   void updateScaleStateFromNewScale(double newScale, ChangeSource source) {
     final boundaries = scaleBoundaries;
     if (boundaries == null) return;
@@ -149,7 +141,7 @@ mixin AvesMagnifierControllerDelegate on State<MagnifierCore> {
 
     final _scale = scale ?? this.scale!;
 
-    final computedWidth = boundaries.childSize.width * _scale;
+    final computedWidth = boundaries.contentSize.width * _scale;
     final screenWidth = boundaries.viewportSize.width;
 
     final positionX = basePosition.x;
@@ -166,7 +158,7 @@ mixin AvesMagnifierControllerDelegate on State<MagnifierCore> {
 
     final _scale = scale ?? this.scale!;
 
-    final computedHeight = boundaries.childSize.height * _scale;
+    final computedHeight = boundaries.contentSize.height * _scale;
     final screenHeight = boundaries.viewportSize.height;
 
     final positionY = basePosition.y;
@@ -184,8 +176,8 @@ mixin AvesMagnifierControllerDelegate on State<MagnifierCore> {
     final _scale = scale ?? this.scale!;
     final _position = position ?? this.position;
 
-    final computedWidth = boundaries.childSize.width * _scale;
-    final computedHeight = boundaries.childSize.height * _scale;
+    final computedWidth = boundaries.contentSize.width * _scale;
+    final computedHeight = boundaries.contentSize.height * _scale;
 
     final screenWidth = boundaries.viewportSize.width;
     final screenHeight = boundaries.viewportSize.height;

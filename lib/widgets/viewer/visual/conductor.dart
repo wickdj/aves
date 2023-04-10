@@ -35,7 +35,7 @@ class ViewStateConductor {
             maxScale: initialScale,
             initialScale: initialScale,
             viewportSize: _viewportSize,
-            childSize: entry.displaySize,
+            contentSize: entry.displaySize,
           ).initialScale,
           viewportSize: _viewportSize,
           contentSize: entry.displaySize,
