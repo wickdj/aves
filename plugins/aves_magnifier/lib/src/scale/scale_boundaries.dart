@@ -2,9 +2,11 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:aves_magnifier/src/controller/controller.dart';
+import 'package:aves_magnifier/src/controller/range.dart';
 import 'package:aves_magnifier/src/scale/scale_level.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 
 /// Internal class to wrap custom scale boundaries (min, max and initial)
 /// Also, stores values regarding the two sizes: the container and the content.
@@ -16,6 +18,8 @@ class ScaleBoundaries extends Equatable {
   final ScaleLevel _initialScale;
   final Size viewportSize;
   final Size contentSize;
+
+  static const Alignment basePosition = Alignment.center;
 
   @override
   List<Object?> get props => [_allowOriginalScaleBeyondRange, _minScale, _maxScale, _initialScale, viewportSize, contentSize];
@@ -88,5 +92,53 @@ class ScaleBoundaries extends Equatable {
 
   Offset contentToStatePosition(double scale, Offset contentPosition) {
     return (_contentCenter - contentPosition) * scale;
+  }
+
+  EdgeRange getXEdges({required double scale}) {
+    final computedWidth = contentSize.width * scale;
+    final viewportWidth = viewportSize.width;
+
+    final positionX = basePosition.x;
+    final widthDiff = computedWidth - viewportWidth;
+
+    final minX = ((positionX - 1).abs() / 2) * widthDiff * -1;
+    final maxX = ((positionX + 1).abs() / 2) * widthDiff;
+    return EdgeRange(minX, maxX);
+  }
+
+  EdgeRange getYEdges({required double scale}) {
+    final computedHeight = contentSize.height * scale;
+    final viewportHeight = viewportSize.height;
+
+    final positionY = basePosition.y;
+    final heightDiff = computedHeight - viewportHeight;
+
+    final minY = ((positionY - 1).abs() / 2) * heightDiff * -1;
+    final maxY = ((positionY + 1).abs() / 2) * heightDiff;
+    return EdgeRange(minY, maxY);
+  }
+
+  double clampScale(double scale) => scale.clamp(minScale, maxScale);
+
+  Offset clampPosition({required Offset position, required double scale}) {
+    final computedWidth = contentSize.width * scale;
+    final computedHeight = contentSize.height * scale;
+
+    final viewportWidth = viewportSize.width;
+    final viewportHeight = viewportSize.height;
+
+    var finalX = 0.0;
+    if (viewportWidth < computedWidth) {
+      final range = getXEdges(scale: scale);
+      finalX = position.dx.clamp(range.min, range.max);
+    }
+
+    var finalY = 0.0;
+    if (viewportHeight < computedHeight) {
+      final range = getYEdges(scale: scale);
+      finalY = position.dy.clamp(range.min, range.max);
+    }
+
+    return Offset(finalX, finalY);
   }
 }

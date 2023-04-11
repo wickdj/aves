@@ -9,30 +9,32 @@ mixin EdgeHitDetector on AvesMagnifierControllerDelegate {
   // so be sure to compare with `precisionErrorTolerance`
 
   EdgeHit getXEdgeHit() {
-    final boundaries = scaleBoundaries;
-    if (boundaries == null) return const EdgeHit(false, false);
+    final _boundaries = scaleBoundaries;
+    final _scale = scale;
+    if (_boundaries == null || _scale == null) return const EdgeHit(false, false);
 
-    final contentWidth = boundaries.contentSize.width * scale!;
-    final viewportWidth = boundaries.viewportSize.width;
+    final contentWidth = _boundaries.contentSize.width * _scale;
+    final viewportWidth = _boundaries.viewportSize.width;
     if (viewportWidth + precisionErrorTolerance >= contentWidth) {
       return const EdgeHit(true, true);
     }
     final x = -position.dx;
-    final range = getXEdges();
+    final range = _boundaries.getXEdges(scale: _scale);
     return EdgeHit(x <= range.min, x >= range.max);
   }
 
   EdgeHit getYEdgeHit() {
-    final boundaries = scaleBoundaries;
-    if (boundaries == null) return const EdgeHit(false, false);
+    final _boundaries = scaleBoundaries;
+    final _scale = scale;
+    if (_boundaries == null || _scale == null) return const EdgeHit(false, false);
 
-    final contentHeight = boundaries.contentSize.height * scale!;
-    final viewportHeight = boundaries.viewportSize.height;
+    final contentHeight = _boundaries.contentSize.height * _scale;
+    final viewportHeight = _boundaries.viewportSize.height;
     if (viewportHeight + precisionErrorTolerance >= contentHeight) {
       return const EdgeHit(true, true);
     }
     final y = -position.dy;
-    final range = getYEdges();
+    final range = _boundaries.getYEdges(scale: _scale);
     return EdgeHit(y <= range.min, y >= range.max);
   }
 

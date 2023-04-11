@@ -186,7 +186,7 @@ class _MagnifierCoreState extends State<MagnifierCore> with TickerProviderStateM
 
     final panPositionDelta = scaleFocalPoint - _lastViewportFocalPosition!;
     final scalePositionDelta = boundaries.viewportToStatePosition(controller, scaleFocalPoint) * (scale! / newScale - 1);
-    final newPosition = clampPosition(
+    final newPosition = boundaries.clampPosition(
       position: position + panPositionDelta + scalePositionDelta,
       scale: newScale,
     );
@@ -230,32 +230,36 @@ class _MagnifierCoreState extends State<MagnifierCore> with TickerProviderStateM
       }
     }
 
-    final _position = controller.position;
-    final _scale = controller.scale!;
-    final maxScale = boundaries.maxScale;
-    final minScale = boundaries.minScale;
+    final currentPosition = controller.position;
+    final currentScale = controller.scale!;
 
     // animate back to min/max scale if gesture yielded a scale exceeding them
-    if (_scale > maxScale || _scale < minScale) {
-      final newScale = _scale.clamp(minScale, maxScale);
-      final newPosition = clampPosition(position: _position * newScale / _scale, scale: newScale);
-      animateScale(_scale, newScale);
-      animatePosition(_position, newPosition);
+    final newScale = boundaries.clampScale(currentScale);
+    if (currentScale != newScale) {
+      final newPosition = boundaries.clampPosition(
+        position: currentPosition * newScale / currentScale,
+        scale: newScale,
+      );
+      animateScale(currentScale, newScale);
+      animatePosition(currentPosition, newPosition);
       return;
     }
 
     // The gesture recognizer triggers a new `onScaleStart` every time a pointer/finger is added or removed.
     // Following a pinch-to-zoom gesture, a new panning gesture may start if the user does not lift both fingers at the same time,
     // so we dismiss such panning gestures when it looks like it followed a scaling gesture.
-    final isPanning = _scale == _startScale && (DateTime.now().difference(_lastScaleGestureDate)).inMilliseconds > 100;
+    final isPanning = currentScale == _startScale && (DateTime.now().difference(_lastScaleGestureDate)).inMilliseconds > 100;
 
     // animate position only when panning without scaling
     if (isPanning) {
       final pps = details.velocity.pixelsPerSecond;
       if (pps != Offset.zero) {
-        final newPosition = clampPosition(position: _position + widget.velocityTransformer(pps) * widget.panInertia);
-        if (_position != newPosition) {
-          final tween = Tween<Offset>(begin: _position, end: newPosition);
+        final newPosition = boundaries.clampPosition(
+          position: currentPosition + widget.velocityTransformer(pps) * widget.panInertia,
+          scale: currentScale,
+        );
+        if (currentPosition != newPosition) {
+          final tween = Tween<Offset>(begin: currentPosition, end: newPosition);
           const curve = Curves.easeOutCubic;
           _positionAnimation = tween.animate(CurvedAnimation(parent: _positionAnimationController, curve: curve));
           _positionAnimationController
@@ -265,7 +269,7 @@ class _MagnifierCoreState extends State<MagnifierCore> with TickerProviderStateM
       }
     }
 
-    if (_scale != _startScale) {
+    if (currentScale != _startScale) {
       _lastScaleGestureDate = DateTime.now();
     }
   }

@@ -70,7 +70,7 @@ mixin AvesMagnifierControllerDelegate on State<MagnifierCore> {
     final boundaries = scaleBoundaries;
     if (boundaries == null) return;
 
-    controller.update(position: clampPosition(), source: state.source);
+    controller.update(position: boundaries.clampPosition(position: position, scale: scale!), source: state.source);
     if (controller.scale == controller.previousState.scale) return;
 
     if (state.source == ChangeSource.internal || state.source == ChangeSource.animation) return;
@@ -134,74 +134,4 @@ mixin AvesMagnifierControllerDelegate on State<MagnifierCore> {
     if (originalScale == nextScale) return;
     controller.setScaleState(nextScaleState, source, childFocalPoint: childFocalPoint);
   }
-
-  EdgeRange getXEdges({double? scale}) {
-    final boundaries = scaleBoundaries;
-    if (boundaries == null) return const EdgeRange(0, 0);
-
-    final _scale = scale ?? this.scale!;
-
-    final computedWidth = boundaries.contentSize.width * _scale;
-    final screenWidth = boundaries.viewportSize.width;
-
-    final positionX = basePosition.x;
-    final widthDiff = computedWidth - screenWidth;
-
-    final minX = ((positionX - 1).abs() / 2) * widthDiff * -1;
-    final maxX = ((positionX + 1).abs() / 2) * widthDiff;
-    return EdgeRange(minX, maxX);
-  }
-
-  EdgeRange getYEdges({double? scale}) {
-    final boundaries = scaleBoundaries;
-    if (boundaries == null) return const EdgeRange(0, 0);
-
-    final _scale = scale ?? this.scale!;
-
-    final computedHeight = boundaries.contentSize.height * _scale;
-    final screenHeight = boundaries.viewportSize.height;
-
-    final positionY = basePosition.y;
-    final heightDiff = computedHeight - screenHeight;
-
-    final minY = ((positionY - 1).abs() / 2) * heightDiff * -1;
-    final maxY = ((positionY + 1).abs() / 2) * heightDiff;
-    return EdgeRange(minY, maxY);
-  }
-
-  Offset clampPosition({Offset? position, double? scale}) {
-    final boundaries = scaleBoundaries;
-    if (boundaries == null) return Offset.zero;
-
-    final _scale = scale ?? this.scale!;
-    final _position = position ?? this.position;
-
-    final computedWidth = boundaries.contentSize.width * _scale;
-    final computedHeight = boundaries.contentSize.height * _scale;
-
-    final screenWidth = boundaries.viewportSize.width;
-    final screenHeight = boundaries.viewportSize.height;
-
-    var finalX = 0.0;
-    if (screenWidth < computedWidth) {
-      final range = getXEdges(scale: _scale);
-      finalX = _position.dx.clamp(range.min, range.max);
-    }
-
-    var finalY = 0.0;
-    if (screenHeight < computedHeight) {
-      final range = getYEdges(scale: _scale);
-      finalY = _position.dy.clamp(range.min, range.max);
-    }
-
-    return Offset(finalX, finalY);
-  }
-}
-
-/// Simple class to store a min and a max value
-class EdgeRange {
-  const EdgeRange(this.min, this.max);
-
-  final double min;
-  final double max;
 }

@@ -45,7 +45,7 @@ class _CropperState extends State<Cropper> with SingleTickerProviderStateMixin {
   static const double minDimension = Cropper.handleDimension;
   static const int panResizeGridDivision = 3;
   static const int straightenGridDivision = 9;
-  static const double overScaleFactor = .0007;
+  static const double overOutlineFactor = .3;
 
   AvesMagnifierController get magnifierController => widget.magnifierController;
 
@@ -55,9 +55,7 @@ class _CropperState extends State<Cropper> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
     final initialRegion = transformController.transformation.region;
-    _viewportSizeNotifier.addListener(() {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _initOutline(initialRegion));
-    });
+    _viewportSizeNotifier.addListener(() => _initOutline(initialRegion));
     _gridAnimationController = AnimationController(
       duration: context.read<DurationsData>().viewerOverlayAnimation,
       vsync: this,
@@ -117,9 +115,32 @@ class _CropperState extends State<Cropper> with SingleTickerProviderStateMixin {
                     child: IgnorePointer(
                       child: Stack(
                         children: [
+                          // use 1 painter per line so that the dashes of one line
+                          // do not get offset depending on the previous line length
                           CustomPaint(
                             painter: DashedPathPainter(
-                              originalPath: Path()..addRect(outlineVisualRect),
+                              originalPath: Path()..addPolygon([outlineVisualRect.topLeft, outlineVisualRect.topRight], false),
+                              pathColor: CropperPainter.borderColor,
+                              strokeWidth: CropperPainter.borderWidth,
+                            ),
+                          ),
+                          CustomPaint(
+                            painter: DashedPathPainter(
+                              originalPath: Path()..addPolygon([outlineVisualRect.bottomLeft, outlineVisualRect.bottomRight], false),
+                              pathColor: CropperPainter.borderColor,
+                              strokeWidth: CropperPainter.borderWidth,
+                            ),
+                          ),
+                          CustomPaint(
+                            painter: DashedPathPainter(
+                              originalPath: Path()..addPolygon([outlineVisualRect.topLeft, outlineVisualRect.bottomLeft], false),
+                              pathColor: CropperPainter.borderColor,
+                              strokeWidth: CropperPainter.borderWidth,
+                            ),
+                          ),
+                          CustomPaint(
+                            painter: DashedPathPainter(
+                              originalPath: Path()..addPolygon([outlineVisualRect.topRight, outlineVisualRect.bottomRight], false),
                               pathColor: CropperPainter.borderColor,
                               strokeWidth: CropperPainter.borderWidth,
                             ),
@@ -209,58 +230,57 @@ class _CropperState extends State<Cropper> with SingleTickerProviderStateMixin {
   }
 
   void _handleOutline({double? left, double? top, double? right, double? bottom}) {
+    final currentState = _getViewState();
+    final boundaries = magnifierController.scaleBoundaries;
+    if (currentState == null || boundaries == null) return;
+
+    final contentSize = boundaries.contentSize;
+    final viewportSize = boundaries.viewportSize;
+
     final currentOutline = _outlineNotifier.value;
-    final targetOutline = Rect.fromLTRB(
-      left ?? currentOutline.left,
-      top ?? currentOutline.top,
-      right ?? currentOutline.right,
-      bottom ?? currentOutline.bottom,
+    final gestureOutline = CropRegion.fromOutline(
+        currentState,
+        Rect.fromLTRB(
+          left ?? currentOutline.left,
+          top ?? currentOutline.top,
+          right ?? currentOutline.right,
+          bottom ?? currentOutline.bottom,
+        )).clamp(Rect.fromLTWH(0, 0, contentSize.width, contentSize.height)).toCropOutline(currentState);
+    final clampedOutline = Rect.fromLTRB(
+      max(gestureOutline.left, 0),
+      max(gestureOutline.top, 0),
+      min(gestureOutline.right, viewportSize.width),
+      min(gestureOutline.bottom, viewportSize.height),
     );
-    _setOutline(targetOutline);
+    _setOutline(clampedOutline);
     _updateCropRegion();
 
     // zoom out when user gesture reaches outer edges
-    final viewState = _getViewState();
-    final contentSize = viewState?.contentSize;
-    final viewportSize = viewState?.viewportSize;
-    final scaleBoundaries = magnifierController.scaleBoundaries;
-    if (viewState == null || contentSize == null || viewportSize == null || scaleBoundaries == null) return;
 
-    final overOffset = Offset(
-      max(targetOutline.left, 0) - targetOutline.left + min(targetOutline.right, viewportSize.width) - targetOutline.right,
-      max(targetOutline.top, 0) - targetOutline.top + min(targetOutline.bottom, viewportSize.height) - targetOutline.bottom,
-    );
-    if (overOffset.distance > precisionErrorTolerance) {
-      final magnifierState = magnifierController.currentState;
-      final currentPosition = magnifierState.position;
-      final currentScale = magnifierState.scale ?? 1;
+    if (gestureOutline.width - clampedOutline.width > precisionErrorTolerance || gestureOutline.height - clampedOutline.height > precisionErrorTolerance) {
+      final targetOutline = Rect.lerp(clampedOutline, gestureOutline, overOutlineFactor)!;
+      final targetRegion = CropRegion.fromOutline(currentState, targetOutline).clamp(Rect.fromLTWH(0, 0, contentSize.width, contentSize.height));
+      final targetRegionSize = targetRegion.outsideRect.size;
 
-      final minScale = scaleBoundaries.minScale;
-      final maxScale = scaleBoundaries.maxScale;
+      final nextScale = boundaries.clampScale(ScaleLevel.scaleForContained(viewportSize, targetRegionSize));
+      final nextPosition = boundaries.clampPosition(
+        position: boundaries.contentToStatePosition(nextScale, targetRegion.center),
+        scale: nextScale,
+      );
+      final nextState = ViewState(
+        position: nextPosition,
+        scale: nextScale,
+        viewportSize: viewportSize,
+        contentSize: contentSize,
+      );
 
-      final currentRegionSize = transformController.transformation.region.outsideRect.size;
-      final targetRegion = CropRegion.fromOutline(viewState, targetOutline).clamp(Rect.fromLTWH(0, 0, contentSize.width, contentSize.height));
-      final targetRegionOutsideRect = targetRegion.outsideRect;
-      final targetRegionSize = targetRegionOutsideRect.size;
-      final containedScale = ScaleLevel.scaleForContained(viewportSize, targetRegionSize);
-      final nextScale = containedScale.clamp(minScale, maxScale);
-      debugPrint('TLAD regionSize=$currentRegionSize -> $targetRegionSize overOffset=$overOffset scale=$currentScale -> $containedScale -> $nextScale');
-      if (nextScale < currentScale) {
-        // debugPrint('TLAD viewportSize=$viewportSize contentSize=$contentSize targetRegionSize=$targetRegionSize scale in [$minScale, $maxScale] nextScale=$nextScale');
-        // final nextPosition = (targetRegion.center - Offset(contentSize.width / 2, contentSize.height / 2)) * nextScale;
-
-        // final nextScale = (lerpDouble(currentScale, scaleBoundaries.minScale, (overOffset.dx.abs() + overOffset.dy.abs()) * overScaleFactor) ?? currentScale);
-        // final overPositionFactor = .05;
-        // final nextPosition = currentPosition / currentScale * nextScale + overOffset * overPositionFactor;
-
-        final nextPosition = currentPosition / currentScale * nextScale;
-
+      if (nextState != currentState) {
         magnifierController.update(
           position: nextPosition,
           scale: nextScale,
           source: ChangeSource.animation,
         );
-        return;
+        _setOutline(targetRegion.toCropOutline(nextState));
       }
     }
   }
@@ -300,34 +320,33 @@ class _CropperState extends State<Cropper> with SingleTickerProviderStateMixin {
   void _onDragEnd() {
     transformController.activity = TransformActivity.none;
 
-    final scaleBoundaries = magnifierController.scaleBoundaries;
-    if (scaleBoundaries != null) {
-      final contentSize = scaleBoundaries.contentSize;
-      final viewportSize = scaleBoundaries.viewportSize;
-      final minScale = scaleBoundaries.minScale;
-      final maxScale = scaleBoundaries.maxScale;
+    final boundaries = magnifierController.scaleBoundaries;
+    if (boundaries == null) return;
 
-      final region = transformController.transformation.region;
-      final regionSize = region.outsideRect.size;
-      final nextScale = ScaleLevel.scaleForContained(viewportSize, regionSize).clamp(minScale, maxScale);
-      // TODO TLAD `clampPosition`
-      final nextPosition = scaleBoundaries.contentToStatePosition(nextScale, region.center);
+    final contentSize = boundaries.contentSize;
+    final viewportSize = boundaries.viewportSize;
 
-      magnifierController.update(
-        position: nextPosition,
-        scale: nextScale,
-        source: ChangeSource.animation,
-      );
+    final region = transformController.transformation.region;
+    final regionSize = region.outsideRect.size;
 
-      final nextViewState = ViewState(
-        position: nextPosition,
-        scale: nextScale,
-        viewportSize: viewportSize,
-        contentSize: contentSize,
-      );
-      _setOutline(region.toCropOutline(nextViewState));
-      _updateCropRegion();
-    }
+    final nextScale = boundaries.clampScale(ScaleLevel.scaleForContained(viewportSize, regionSize));
+    final nextPosition = boundaries.clampPosition(
+      position: boundaries.contentToStatePosition(nextScale, region.center),
+      scale: nextScale,
+    );
+    final nextState = ViewState(
+      position: nextPosition,
+      scale: nextScale,
+      viewportSize: viewportSize,
+      contentSize: contentSize,
+    );
+
+    magnifierController.update(
+      position: nextPosition,
+      scale: nextScale,
+      source: ChangeSource.animation,
+    );
+    _setOutline(region.toCropOutline(nextState));
   }
 
   void _onTransformEvent(TransformEvent event) {
