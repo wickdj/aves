@@ -9,3 +9,7 @@ extension ExtraOffset on Offset {
 extension ExtraVector3 on Vector3 {
   Offset get toOffset => Offset(x, y);
 }
+
+extension ExtraMatrix4 on Matrix4 {
+  Offset transformOffset(Offset v) => transform3(v.toVector3).toOffset;
+}

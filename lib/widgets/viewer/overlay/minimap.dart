@@ -106,15 +106,16 @@ class MinimapPainter extends CustomPainter {
 
     Matrix4? transformMatrix;
     if (transformation != null) {
-      final transformOrigin = viewportRect.center;
+      final viewportCenter = viewportRect.center;
+      final transformOrigin = viewportCenter;
       transformMatrix = Matrix4.identity()
         ..translate(transformOrigin.dx, transformOrigin.dy)
         ..multiply(transformation!.matrix)
         ..translate(-transformOrigin.dx, -transformOrigin.dy);
-      final transViewportCenter = transformMatrix.transform3(viewportRect.center.toVector3).toOffset;
-      final transContentCenter = transformMatrix.transform3(contentRect.center.toVector3).toOffset;
+      final transViewportCenter = transformMatrix.transformOffset(viewportCenter);
+      final transContentCenter = transformMatrix.transformOffset(contentRect.center);
 
-      final minimapTranslation = size / 2 + (transViewportCenter - transContentCenter - viewportRect.center);
+      final minimapTranslation = size / 2 + (transViewportCenter - transContentCenter - viewportCenter);
       canvas.translate(minimapTranslation.width, minimapTranslation.height);
     } else {
       canvas.translate((contentRect.width - size.width) / 2, (contentRect.height - size.height) / 2);

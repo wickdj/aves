@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:aves/model/view_state.dart';
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
@@ -45,30 +44,6 @@ class CropRegion extends Equatable {
       bottomRight: rect.bottomRight,
       bottomLeft: rect.bottomLeft,
     );
-  }
-
-  factory CropRegion.fromOutline(ViewState viewState, Rect outline) {
-    final points = [
-      outline.topLeft,
-      outline.topRight,
-      outline.bottomRight,
-      outline.bottomLeft,
-    ].map(viewState.toContentPoint).toList(); // _matrix.transform3(v.toVector3).toOffset).toList();
-    return CropRegion(
-      topLeft: points[0],
-      topRight: points[1],
-      bottomRight: points[2],
-      bottomLeft: points[3],
-    );
-  }
-
-  Rect toCropOutline(ViewState viewState) {
-    final points = corners.map(viewState.toViewportPoint).toSet();
-    final xMin = points.map((v) => v.dx).min;
-    final xMax = points.map((v) => v.dx).max;
-    final yMin = points.map((v) => v.dy).min;
-    final yMax = points.map((v) => v.dy).max;
-    return Rect.fromPoints(Offset(xMin, yMin), Offset(xMax, yMax));
   }
 
   CropRegion clamp(Rect rect) {

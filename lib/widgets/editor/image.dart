@@ -115,7 +115,7 @@ class _EditorImageState extends State<EditorImage> {
                     allowOriginalScaleBeyondRange: false,
                     allowGestureScaleBeyondRange: false,
                     panInertia: _getActionPanInertia(action),
-                    velocityTransformer: (input) => userToImageMatrix.transform3(input.toVector3).toOffset,
+                    velocityTransformer: userToImageMatrix.transformOffset,
                     minScale: const ScaleLevel(ref: ScaleReference.contained),
                     maxScale: const ScaleLevel(factor: 1),
                     initialScale: const ScaleLevel(ref: ScaleReference.contained),

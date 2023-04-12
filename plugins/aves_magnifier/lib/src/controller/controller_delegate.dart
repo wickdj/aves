@@ -17,7 +17,7 @@ mixin AvesMagnifierControllerDelegate on State<MagnifierCore> {
 
   ScaleStateCycle get scaleStateCycle => widget.scaleStateCycle;
 
-  Alignment get basePosition => Alignment.center;
+  Alignment get basePosition => ScaleBoundaries.basePosition;
 
   Function(double? prevScale, double? nextScale, Offset nextPosition)? _animateScale;
 

@@ -1,7 +1,9 @@
 import 'dart:ui';
 
 import 'package:aves/model/view_state.dart';
+import 'package:aves/utils/vector_utils.dart';
 import 'package:test/test.dart';
+import 'package:vector_math/vector_math_64.dart';
 
 void main() {
   test('scene -> viewport, original scaleFit', () {
@@ -9,8 +11,8 @@ void main() {
     const content = Rect.fromLTWH(0, 0, 200, 400);
     final state = ViewState(position: Offset.zero, scale: 1, viewportSize: viewport.size, contentSize: content.size);
 
-    expect(state.toViewportPoint(content.topLeft), const Offset(-50, -100));
-    expect(state.toViewportPoint(content.bottomRight), const Offset(150, 300));
+    expect(_toViewportPoint(state, content.topLeft), const Offset(-50, -100));
+    expect(_toViewportPoint(state, content.bottomRight), const Offset(150, 300));
   });
 
   test('scene -> viewport, scaled to fit .5', () {
@@ -18,9 +20,9 @@ void main() {
     const content = Rect.fromLTWH(0, 0, 200, 400);
     final state = ViewState(position: Offset.zero, scale: .5, viewportSize: viewport.size, contentSize: content.size);
 
-    expect(state.toViewportPoint(content.topLeft), viewport.topLeft);
-    expect(state.toViewportPoint(content.center), viewport.center);
-    expect(state.toViewportPoint(content.bottomRight), viewport.bottomRight);
+    expect(_toViewportPoint(state, content.topLeft), viewport.topLeft);
+    expect(_toViewportPoint(state, content.center), viewport.center);
+    expect(_toViewportPoint(state, content.bottomRight), viewport.bottomRight);
   });
 
   test('scene -> viewport, scaled to fit .25', () {
@@ -28,9 +30,9 @@ void main() {
     const content = Rect.fromLTWH(0, 0, 200, 400);
     final state = ViewState(position: Offset.zero, scale: .25, viewportSize: viewport.size, contentSize: content.size);
 
-    expect(state.toViewportPoint(content.topLeft), viewport.topLeft);
-    expect(state.toViewportPoint(content.center), viewport.center);
-    expect(state.toViewportPoint(content.bottomRight), viewport.bottomRight);
+    expect(_toViewportPoint(state, content.topLeft), viewport.topLeft);
+    expect(_toViewportPoint(state, content.center), viewport.center);
+    expect(_toViewportPoint(state, content.bottomRight), viewport.bottomRight);
   });
 
   test('viewport -> scene, original scaleFit', () {
@@ -38,8 +40,8 @@ void main() {
     const content = Rect.fromLTWH(0, 0, 200, 400);
     final state = ViewState(position: Offset.zero, scale: 1, viewportSize: viewport.size, contentSize: content.size);
 
-    expect(state.toContentPoint(viewport.topLeft), const Offset(50, 100));
-    expect(state.toContentPoint(viewport.bottomRight), const Offset(150, 300));
+    expect(_toContentPoint(state, viewport.topLeft), const Offset(50, 100));
+    expect(_toContentPoint(state, viewport.bottomRight), const Offset(150, 300));
   });
 
   test('viewport -> scene, scaled to fit', () {
@@ -47,9 +49,9 @@ void main() {
     const content = Rect.fromLTWH(0, 0, 200, 400);
     final state = ViewState(position: Offset.zero, scale: .5, viewportSize: viewport.size, contentSize: content.size);
 
-    expect(state.toContentPoint(viewport.topLeft), content.topLeft);
-    expect(state.toContentPoint(viewport.center), content.center);
-    expect(state.toContentPoint(viewport.bottomRight), content.bottomRight);
+    expect(_toContentPoint(state, viewport.topLeft), content.topLeft);
+    expect(_toContentPoint(state, viewport.center), content.center);
+    expect(_toContentPoint(state, viewport.bottomRight), content.bottomRight);
   });
 
   test('viewport -> scene, translated', () {
@@ -57,9 +59,9 @@ void main() {
     const content = Rect.fromLTWH(0, 0, 200, 400);
     final state = ViewState(position: const Offset(50, 50), scale: 1, viewportSize: viewport.size, contentSize: content.size);
 
-    state.toContentPoint(viewport.topLeft);
-    expect(state.toContentPoint(viewport.topLeft), const Offset(0, 50));
-    expect(state.toContentPoint(viewport.bottomRight), const Offset(100, 250));
+    _toContentPoint(state, viewport.topLeft);
+    expect(_toContentPoint(state, viewport.topLeft), const Offset(0, 50));
+    expect(_toContentPoint(state, viewport.bottomRight), const Offset(100, 250));
   });
 
   test('scene -> viewport, scaled to fit, different ratios', () {
@@ -71,8 +73,18 @@ void main() {
     final scaledContentLeft = (viewport.width - content.width * scaleFit) / 2;
     final scaledContentRight = viewport.width - scaledContentLeft;
 
-    expect(state.toViewportPoint(content.topLeft), Offset(scaledContentLeft, 0));
-    expect(state.toViewportPoint(content.center), viewport.center);
-    expect(state.toViewportPoint(content.bottomRight), Offset(scaledContentRight, viewport.bottom));
+    expect(_toViewportPoint(state, content.topLeft), Offset(scaledContentLeft, 0));
+    expect(_toViewportPoint(state, content.center), viewport.center);
+    expect(_toViewportPoint(state, content.bottomRight), Offset(scaledContentRight, viewport.bottom));
   });
+}
+
+// convenience methods
+
+Offset _toViewportPoint(ViewState state, Offset contentPoint) {
+  return state.matrix.transformOffset(contentPoint);
+}
+
+Offset _toContentPoint(ViewState state, viewportPoint) {
+  return Matrix4.inverted(state.matrix).transformOffset(viewportPoint);
 }

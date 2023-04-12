@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:aves/model/view_state.dart';
 import 'package:aves/theme/durations.dart';
+import 'package:aves/utils/vector_utils.dart';
 import 'package:aves/widgets/common/fx/dashed_path_painter.dart';
 import 'package:aves/widgets/editor/transform/controller.dart';
 import 'package:aves/widgets/editor/transform/crop_region.dart';
@@ -11,6 +12,7 @@ import 'package:aves/widgets/editor/transform/painter.dart';
 import 'package:aves/widgets/editor/transform/transformation.dart';
 import 'package:aves_magnifier/aves_magnifier.dart';
 import 'package:aves_model/aves_model.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -89,6 +91,8 @@ class _CropperState extends State<Cropper> with SingleTickerProviderStateMixin {
     _subscriptions.add(widget.magnifierController.stateStream.listen(_onViewStateChanged));
     _subscriptions.add(widget.magnifierController.scaleBoundariesStream.listen(_onViewBoundariesChanged));
     _subscriptions.add(widget.transformController.eventStream.listen(_onTransformEvent));
+    _subscriptions.add(widget.transformController.transformationStream.map((v) => v.orientation).distinct().listen(_onOrientationChanged));
+    _subscriptions.add(widget.transformController.transformationStream.map((v) => v.straightenDegrees).distinct().listen(_onStraightenDegreesChanged));
   }
 
   void _unregisterWidget(Cropper widget) {
@@ -238,14 +242,15 @@ class _CropperState extends State<Cropper> with SingleTickerProviderStateMixin {
     final viewportSize = boundaries.viewportSize;
 
     final currentOutline = _outlineNotifier.value;
-    final gestureOutline = CropRegion.fromOutline(
+    final gestureRegion = _regionFromOutline(
         currentState,
         Rect.fromLTRB(
           left ?? currentOutline.left,
           top ?? currentOutline.top,
           right ?? currentOutline.right,
           bottom ?? currentOutline.bottom,
-        )).clamp(Rect.fromLTWH(0, 0, contentSize.width, contentSize.height)).toCropOutline(currentState);
+        )).clamp(Rect.fromLTWH(0, 0, contentSize.width, contentSize.height));
+    final gestureOutline = _regionToOutline(currentState, gestureRegion);
     final clampedOutline = Rect.fromLTRB(
       max(gestureOutline.left, 0),
       max(gestureOutline.top, 0),
@@ -259,7 +264,7 @@ class _CropperState extends State<Cropper> with SingleTickerProviderStateMixin {
 
     if (gestureOutline.width - clampedOutline.width > precisionErrorTolerance || gestureOutline.height - clampedOutline.height > precisionErrorTolerance) {
       final targetOutline = Rect.lerp(clampedOutline, gestureOutline, overOutlineFactor)!;
-      final targetRegion = CropRegion.fromOutline(currentState, targetOutline).clamp(Rect.fromLTWH(0, 0, contentSize.width, contentSize.height));
+      final targetRegion = _regionFromOutline(currentState, targetOutline).clamp(Rect.fromLTWH(0, 0, contentSize.width, contentSize.height));
       final targetRegionSize = targetRegion.outsideRect.size;
 
       final nextScale = boundaries.clampScale(ScaleLevel.scaleForContained(viewportSize, targetRegionSize));
@@ -280,7 +285,7 @@ class _CropperState extends State<Cropper> with SingleTickerProviderStateMixin {
           scale: nextScale,
           source: ChangeSource.animation,
         );
-        _setOutline(targetRegion.toCropOutline(nextState));
+        _setOutline(_regionToOutline(nextState, targetRegion));
       }
     }
   }
@@ -319,7 +324,10 @@ class _CropperState extends State<Cropper> with SingleTickerProviderStateMixin {
 
   void _onDragEnd() {
     transformController.activity = TransformActivity.none;
+    _showRegion();
+  }
 
+  void _showRegion() {
     final boundaries = magnifierController.scaleBoundaries;
     if (boundaries == null) return;
 
@@ -346,7 +354,7 @@ class _CropperState extends State<Cropper> with SingleTickerProviderStateMixin {
       scale: nextScale,
       source: ChangeSource.animation,
     );
-    _setOutline(region.toCropOutline(nextState));
+    _setOutline(_regionToOutline(nextState, region));
   }
 
   void _onTransformEvent(TransformEvent event) {
@@ -367,6 +375,14 @@ class _CropperState extends State<Cropper> with SingleTickerProviderStateMixin {
     } else {
       _gridAnimationController.forward();
     }
+  }
+
+  void _onOrientationChanged(TransformOrientation orientation) {
+    _showRegion();
+  }
+
+  void _onStraightenDegreesChanged(double degrees) {
+    _updateCropRegion();
   }
 
   void _onViewStateChanged(MagnifierState state) {
@@ -401,7 +417,7 @@ class _CropperState extends State<Cropper> with SingleTickerProviderStateMixin {
   void _initOutline(CropRegion region) {
     final viewState = _getViewState();
     if (viewState != null) {
-      _setOutline(region.toCropOutline(viewState));
+      _setOutline(_regionToOutline(viewState, region));
       _updateCropRegion();
     }
   }
@@ -413,8 +429,8 @@ class _CropperState extends State<Cropper> with SingleTickerProviderStateMixin {
     if (targetOutline.isEmpty || viewState == null || contentSize == null || viewportSize == null) return;
 
     // ensure outline is within content
-    final targetRegion = CropRegion.fromOutline(viewState, targetOutline).clamp(Rect.fromLTWH(0, 0, contentSize.width, contentSize.height));
-    var newOutline = targetRegion.toCropOutline(viewState);
+    final targetRegion = _regionFromOutline(viewState, targetOutline).clamp(Rect.fromLTWH(0, 0, contentSize.width, contentSize.height));
+    var newOutline = _regionToOutline(viewState, targetRegion);
 
     // ensure outline is large enough to be handled
     newOutline = Rect.fromLTWH(
@@ -439,7 +455,48 @@ class _CropperState extends State<Cropper> with SingleTickerProviderStateMixin {
     final viewState = _getViewState();
     final outline = _outlineNotifier.value;
     if (viewState != null && !outline.isEmpty) {
-      transformController.cropRegion = CropRegion.fromOutline(viewState, outline);
+      transformController.cropRegion = _regionFromOutline(viewState, outline);
     }
+  }
+
+  Matrix4 _getRegionToOutlineMatrix(ViewState viewState) {
+    final magnifierMatrix = viewState.matrix;
+
+    final viewportCenter = viewState.viewportSize!.center(Offset.zero);
+    final transformOrigin = Matrix4.inverted(magnifierMatrix).transformOffset(viewportCenter);
+    final transformMatrix = Matrix4.identity()
+      ..translate(transformOrigin.dx, transformOrigin.dy)
+      ..multiply(transformController.transformation.matrix)
+      ..translate(-transformOrigin.dx, -transformOrigin.dy);
+
+    return magnifierMatrix..multiply(transformMatrix);
+  }
+
+  CropRegion _regionFromOutline(ViewState viewState, Rect outline) {
+    final matrix = _getRegionToOutlineMatrix(viewState)..invert();
+
+    final points = [
+      outline.topLeft,
+      outline.topRight,
+      outline.bottomRight,
+      outline.bottomLeft,
+    ].map(matrix.transformOffset).toList();
+    return CropRegion(
+      topLeft: points[0],
+      topRight: points[1],
+      bottomRight: points[2],
+      bottomLeft: points[3],
+    );
+  }
+
+  Rect _regionToOutline(ViewState viewState, CropRegion region) {
+    final matrix = _getRegionToOutlineMatrix(viewState);
+
+    final points = region.corners.map(matrix.transformOffset).toSet();
+    final xMin = points.map((v) => v.dx).min;
+    final xMax = points.map((v) => v.dx).max;
+    final yMin = points.map((v) => v.dy).min;
+    final yMax = points.map((v) => v.dy).max;
+    return Rect.fromPoints(Offset(xMin, yMin), Offset(xMax, yMax));
   }
 }
