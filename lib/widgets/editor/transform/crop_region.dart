@@ -45,16 +45,4 @@ class CropRegion extends Equatable {
       bottomLeft: rect.bottomLeft,
     );
   }
-
-  CropRegion clamp(Rect rect) {
-    double clampX(double dx) => dx.clamp(rect.left, rect.right);
-    double clampY(double dy) => dy.clamp(rect.top, rect.bottom);
-    Offset clampPoint(Offset v) => Offset(clampX(v.dx), clampY(v.dy));
-    return CropRegion(
-      topLeft: clampPoint(topLeft),
-      topRight: clampPoint(topRight),
-      bottomRight: clampPoint(bottomRight),
-      bottomLeft: clampPoint(bottomLeft),
-    );
-  }
 }

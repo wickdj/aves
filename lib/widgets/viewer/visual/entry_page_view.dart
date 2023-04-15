@@ -397,7 +397,7 @@ class _EntryPageViewState extends State<EntryPageView> with SingleTickerProvider
       // key includes modified date to refresh when the image is modified by metadata (e.g. rotated)
       key: Key('${entry.uri}_${entry.pageId}_${entry.dateModifiedSecs}'),
       controller: controller ?? _magnifierController,
-      childSize: displaySize ?? entry.displaySize,
+      contentSize: displaySize ?? entry.displaySize,
       allowOriginalScaleBeyondRange: !isWallpaperMode,
       minScale: minScale,
       maxScale: maxScale,

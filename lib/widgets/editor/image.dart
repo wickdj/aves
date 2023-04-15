@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:aves/model/entry/entry.dart';
 import 'package:aves/model/view_state.dart';
 import 'package:aves/theme/durations.dart';
-import 'package:aves/utils/vector_utils.dart';
 import 'package:aves/widgets/editor/transform/controller.dart';
 import 'package:aves/widgets/editor/transform/painter.dart';
 import 'package:aves/widgets/editor/transform/transformation.dart';
@@ -90,81 +89,90 @@ class _EditorImageState extends State<EditorImage> {
         stream: transformController.transformationStream,
         builder: (context, snapshot) {
           final transformation = (snapshot.data ?? Transformation.zero);
-          final imageToUserMatrix = transformation.matrix;
-          final userToImageMatrix = Matrix4.identity()..copyInverse(imageToUserMatrix);
           final highlightRegionCorners = transformation.region.corners;
-          return Transform(
-            alignment: Alignment.center,
-            transform: imageToUserMatrix,
-            child: ValueListenableBuilder<EdgeInsets>(
-              valueListenable: widget.paddingNotifier,
-              builder: (context, padding, child) {
-                return AnimatedPadding(
-                  padding: padding,
-                  duration: context.read<DurationsData>().viewerOverlayAnimation,
-                  child: child,
-                );
-              },
+          final imageToUserMatrix = transformation.matrix;
+
+          final mediaSize = entry.displaySize;
+          final canvasSize = MatrixUtils.transformRect(imageToUserMatrix, Offset.zero & mediaSize).size;
+
+          return ValueListenableBuilder<EdgeInsets>(
+            valueListenable: widget.paddingNotifier,
+            builder: (context, padding, child) {
+              return AnimatedPadding(
+                padding: padding,
+                duration: context.read<DurationsData>().viewerOverlayAnimation,
+                child: child,
+              );
+            },
+            child: Transform(
+              alignment: Alignment.center,
+              transform: imageToUserMatrix,
               child: ValueListenableBuilder<EditorAction?>(
                 valueListenable: widget.actionNotifier,
                 builder: (context, action, child) {
-                  return AvesMagnifier(
-                    key: Key('${entry.uri}_${entry.pageId}_${entry.dateModifiedSecs}'),
-                    controller: widget.magnifierController,
-                    childSize: entry.displaySize,
-                    allowOriginalScaleBeyondRange: false,
-                    allowGestureScaleBeyondRange: false,
-                    panInertia: _getActionPanInertia(action),
-                    velocityTransformer: userToImageMatrix.transformOffset,
-                    minScale: const ScaleLevel(ref: ScaleReference.contained),
-                    maxScale: const ScaleLevel(factor: 1),
-                    initialScale: const ScaleLevel(ref: ScaleReference.contained),
-                    scaleStateCycle: defaultScaleStateCycle,
-                    applyScale: false,
-                    onScaleStart: (details, doubleTap, boundaries) {
-                      transformController.activity = TransformActivity.pan;
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      final viewportSize = constraints.biggest;
+                      final minScale = ScaleLevel(factor: ScaleLevel.scaleForContained(viewportSize, canvasSize));
+                      return AvesMagnifier(
+                        key: Key('${entry.uri}_${entry.pageId}_${entry.dateModifiedSecs}'),
+                        controller: widget.magnifierController,
+                        contentSize: mediaSize,
+                        allowOriginalScaleBeyondRange: false,
+                        allowGestureScaleBeyondRange: false,
+                        panInertia: _getActionPanInertia(action),
+                        minScale: minScale,
+                        maxScale: const ScaleLevel(factor: 1),
+                        initialScale: minScale,
+                        scaleStateCycle: defaultScaleStateCycle,
+                        applyScale: false,
+                        onScaleStart: (details, doubleTap, boundaries) {
+                          transformController.activity = TransformActivity.pan;
+                        },
+                        onScaleEnd: (details) {
+                          transformController.activity = TransformActivity.none;
+                        },
+                        child: child!,
+                      );
                     },
-                    onScaleEnd: (details) {
-                      transformController.activity = TransformActivity.none;
-                    },
-                    child: Stack(
-                      children: [
-                        RasterImageView(
-                          entry: entry,
-                          viewStateNotifier: viewStateNotifier,
-                          errorBuilder: (context, error, stackTrace) => ErrorView(
-                            entry: entry,
-                            onTap: () {},
-                          ),
-                        ),
-                        Positioned.fill(
-                          child: ValueListenableBuilder<ViewState>(
-                            valueListenable: viewStateNotifier,
-                            builder: (context, viewState, child) {
-                              final scale = viewState.scale ?? 1;
-                              final highlightRegionPath = Path()..addPolygon(highlightRegionCorners.map((v) => v * scale).toList(), true);
-                              return ValueListenableBuilder<double>(
-                                valueListenable: _scrimOpacityNotifier,
-                                builder: (context, opacity, child) {
-                                  return AnimatedOpacity(
-                                    opacity: opacity,
-                                    duration: context.read<DurationsData>().viewerOverlayAnimation,
-                                    child: CustomPaint(
-                                      painter: ScrimPainter(
-                                        excludePath: highlightRegionPath,
-                                        opacity: opacity,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
                   );
                 },
+                child: Stack(
+                  children: [
+                    RasterImageView(
+                      entry: entry,
+                      viewStateNotifier: viewStateNotifier,
+                      errorBuilder: (context, error, stackTrace) => ErrorView(
+                        entry: entry,
+                        onTap: () {},
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: ValueListenableBuilder<ViewState>(
+                        valueListenable: viewStateNotifier,
+                        builder: (context, viewState, child) {
+                          final scale = viewState.scale ?? 1;
+                          final highlightRegionPath = Path()..addPolygon(highlightRegionCorners.map((v) => v * scale).toList(), true);
+                          return ValueListenableBuilder<double>(
+                            valueListenable: _scrimOpacityNotifier,
+                            builder: (context, opacity, child) {
+                              return AnimatedOpacity(
+                                opacity: opacity,
+                                duration: context.read<DurationsData>().viewerOverlayAnimation,
+                                child: CustomPaint(
+                                  painter: ScrimPainter(
+                                    excludePath: highlightRegionPath,
+                                    opacity: opacity,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );

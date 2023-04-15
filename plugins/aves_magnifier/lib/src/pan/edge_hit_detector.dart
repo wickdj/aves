@@ -1,4 +1,5 @@
 import 'package:aves_magnifier/src/controller/controller_delegate.dart';
+import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
@@ -58,11 +59,15 @@ mixin EdgeHitDetector on AvesMagnifierControllerDelegate {
   }
 }
 
-class EdgeHit {
-  const EdgeHit(this.hasHitMin, this.hasHitMax);
-
+@immutable
+class EdgeHit extends Equatable {
   final bool hasHitMin;
   final bool hasHitMax;
+
+  @override
+  List<Object?> get props => [hasHitMin, hasHitMax];
+
+  const EdgeHit(this.hasHitMin, this.hasHitMax);
 
   bool get hasHitAny => hasHitMin || hasHitMax;
 

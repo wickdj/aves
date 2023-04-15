@@ -193,7 +193,7 @@ class _TransitionImagePainter extends CustomPainter {
       ..filterQuality = FilterQuality.low;
     const alignment = Alignment.center;
 
-    final rect = ui.Rect.fromLTWH(0, 0, size.width, size.height);
+    final rect = Offset.zero & size;
     final inputSize = Size(image!.width.toDouble(), image!.height.toDouble());
     final outputSize = rect.size;
 

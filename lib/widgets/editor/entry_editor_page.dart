@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:aves/model/entry/entry.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/model/view_state.dart';
@@ -26,6 +28,7 @@ class ImageEditorPage extends StatefulWidget {
 }
 
 class _ImageEditorPageState extends State<ImageEditorPage> {
+  final List<StreamSubscription> _subscriptions = [];
   final ValueNotifier<EditorAction?> _actionNotifier = ValueNotifier(null);
   final ValueNotifier<EdgeInsets> _paddingNotifier = ValueNotifier(EdgeInsets.zero);
   final ValueNotifier<ViewState> _viewStateNotifier = ValueNotifier<ViewState>(ViewState.zero);
@@ -37,10 +40,14 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
     super.initState();
     _transformController = TransformController(widget.entry.displaySize);
     _actionNotifier.addListener(_onActionChanged);
+    _subscriptions.add(_transformController.transformationStream.map((v) => v.matrix).distinct().listen(_onTransformationMatrixChanged));
   }
 
   @override
   void dispose() {
+    _subscriptions
+      ..forEach((sub) => sub.cancel())
+      ..clear();
     _actionNotifier.dispose();
     _paddingNotifier.dispose();
     _viewStateNotifier.dispose();
@@ -113,6 +120,17 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
       _paddingNotifier.value = Cropper.imagePadding;
     } else {
       _paddingNotifier.value = EdgeInsets.zero;
+    }
+  }
+
+  void _onTransformationMatrixChanged(Matrix4 transformationMatrix) {
+    final boundaries = _magnifierController.scaleBoundaries;
+    if (boundaries != null) {
+      _magnifierController.setScaleBoundaries(
+        boundaries.copyWith(
+          externalTransform: transformationMatrix,
+        ),
+      );
     }
   }
 }

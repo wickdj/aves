@@ -8,13 +8,12 @@ import 'package:aves_magnifier/src/magnifier.dart';
 import 'package:aves_magnifier/src/pan/edge_hit_detector.dart';
 import 'package:aves_magnifier/src/scale/scale_boundaries.dart';
 import 'package:aves_magnifier/src/scale/state.dart';
+import 'package:aves_utils/aves_utils.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:tuple/tuple.dart';
-
-typedef VelocityTransformer = Offset Function(Offset velocity);
 
 /// Internal widget in which controls all animations lifecycle, core responses
 /// to user gestures, updates to the controller state and mounts the entire Layout
@@ -23,7 +22,6 @@ class MagnifierCore extends StatefulWidget {
   final ScaleStateCycle scaleStateCycle;
   final bool applyScale, allowGestureScaleBeyondRange;
   final double panInertia;
-  final VelocityTransformer velocityTransformer;
   final MagnifierGestureScaleStartCallback? onScaleStart;
   final MagnifierGestureScaleUpdateCallback? onScaleUpdate;
   final MagnifierGestureScaleEndCallback? onScaleEnd;
@@ -39,7 +37,6 @@ class MagnifierCore extends StatefulWidget {
     required this.applyScale,
     required this.allowGestureScaleBeyondRange,
     required this.panInertia,
-    VelocityTransformer? velocityTransformer,
     this.onScaleStart,
     this.onScaleUpdate,
     this.onScaleEnd,
@@ -47,9 +44,7 @@ class MagnifierCore extends StatefulWidget {
     this.onTap,
     this.onDoubleTap,
     required this.child,
-  }) : velocityTransformer = velocityTransformer ?? defaultVelocityTransformer;
-
-  static Offset defaultVelocityTransformer(Offset velocity) => velocity;
+  });
 
   @override
   State<StatefulWidget> createState() => _MagnifierCoreState();
@@ -179,7 +174,7 @@ class _MagnifierCoreState extends State<MagnifierCore> with TickerProviderStateM
       newScale = _startScale! * details.scale;
     }
     if (!widget.allowGestureScaleBeyondRange) {
-      newScale = newScale.clamp(boundaries.minScale, boundaries.maxScale);
+      newScale = boundaries.clampScale(newScale);
     }
     newScale = max(0, newScale);
     final scaleFocalPoint = _doubleTap ? _startFocalPoint! : details.localFocalPoint;
@@ -252,10 +247,14 @@ class _MagnifierCoreState extends State<MagnifierCore> with TickerProviderStateM
 
     // animate position only when panning without scaling
     if (isPanning) {
-      final pps = details.velocity.pixelsPerSecond;
+      var pps = details.velocity.pixelsPerSecond;
       if (pps != Offset.zero) {
+        final externalTransform = boundaries.externalTransform;
+        if (externalTransform != null) {
+          pps = Matrix4.inverted(externalTransform).transformOffset(pps);
+        }
         final newPosition = boundaries.clampPosition(
-          position: currentPosition + widget.velocityTransformer(pps) * widget.panInertia,
+          position: currentPosition + pps * widget.panInertia,
           scale: currentScale,
         );
         if (currentPosition != newPosition) {

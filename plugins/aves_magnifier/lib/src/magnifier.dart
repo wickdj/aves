@@ -22,8 +22,7 @@ class AvesMagnifier extends StatelessWidget {
   const AvesMagnifier({
     super.key,
     required this.controller,
-    required this.childSize,
-    this.velocityTransformer,
+    required this.contentSize,
     this.allowOriginalScaleBeyondRange = true,
     this.allowGestureScaleBeyondRange = true,
     this.panInertia = defaultPanInertia,
@@ -46,9 +45,7 @@ class AvesMagnifier extends StatelessWidget {
   final AvesMagnifierController controller;
 
   // The size of the custom [child]. This value is used to compute the relation between the child and the container's size to calculate the scale value.
-  final Size childSize;
-
-  final VelocityTransformer? velocityTransformer;
+  final Size contentSize;
 
   final bool allowOriginalScaleBeyondRange;
   final bool allowGestureScaleBeyondRange;
@@ -77,13 +74,13 @@ class AvesMagnifier extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        controller.setScaleBoundaries(ScaleBoundaries(
-          allowOriginalScaleBeyondRange: allowOriginalScaleBeyondRange,
-          minScale: minScale,
-          maxScale: maxScale,
-          initialScale: initialScale,
-          viewportSize: constraints.biggest,
-          contentSize: childSize.isEmpty == false ? childSize : constraints.biggest,
+        controller.setScaleBoundaries((controller.scaleBoundaries ?? ScaleBoundaries.zero).copyWith(
+            allowOriginalScaleBeyondRange: allowOriginalScaleBeyondRange,
+            minScale: minScale,
+            maxScale: maxScale,
+            initialScale: initialScale,
+            viewportSize: constraints.biggest,
+            contentSize: contentSize.isEmpty == false ? contentSize : constraints.biggest,
         ));
 
         return MagnifierCore(
@@ -92,7 +89,6 @@ class AvesMagnifier extends StatelessWidget {
           applyScale: applyScale,
           allowGestureScaleBeyondRange: allowGestureScaleBeyondRange,
           panInertia: panInertia,
-          velocityTransformer: velocityTransformer,
           onScaleStart: onScaleStart,
           onScaleUpdate: onScaleUpdate,
           onScaleEnd: onScaleEnd,

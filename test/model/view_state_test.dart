@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:aves/model/view_state.dart';
-import 'package:aves/utils/vector_utils.dart';
+import 'package:aves_utils/aves_utils.dart';
 import 'package:test/test.dart';
 import 'package:vector_math/vector_math_64.dart';
 

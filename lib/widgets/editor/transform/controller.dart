@@ -43,7 +43,7 @@ class TransformController {
 
   void reset() {
     _transformation = Transformation.zero.copyWith(
-      region: CropRegion.fromRect(Rect.fromLTWH(0, 0, displaySize.width, displaySize.height)),
+      region: CropRegion.fromRect(Offset.zero & displaySize),
     );
     _transformationStreamController.add(_transformation);
   }
