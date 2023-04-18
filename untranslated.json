@@ -1235,33 +1235,12 @@
   "el": [
     "saveCopyButtonLabel",
     "applyTooltip",
-    "chipActionGoToPlacePage",
-    "chipActionShowCountryStates",
-    "viewerActionLock",
-    "viewerActionUnlock",
     "editorActionTransform",
     "editorTransformCrop",
     "editorTransformRotate",
     "cropAspectRatioFree",
     "cropAspectRatioOriginal",
-    "cropAspectRatioSquare",
-    "vaultLockTypePattern",
-    "settingsVideoEnablePip",
-    "patternDialogEnter",
-    "patternDialogConfirm",
-    "exportEntryDialogWriteMetadata",
-    "drawerPlacePage",
-    "statePageTitle",
-    "stateEmpty",
-    "placePageTitle",
-    "placeEmpty",
-    "searchStatesSectionTitle",
-    "settingsCollectionBurstPatternsTile",
-    "settingsCollectionBurstPatternsNone",
-    "settingsVideoBackgroundMode",
-    "settingsVideoBackgroundModeDialogTitle",
-    "statsTopStatesSectionTitle",
-    "tagPlaceholderState"
+    "cropAspectRatioSquare"
   ],
 
   "es": [
@@ -3599,85 +3578,6 @@
     "filePickerUseThisFolder"
   ],
 
-<<<<<<< HEAD
-  "id": [
-    "saveCopyButtonLabel",
-    "applyTooltip",
-    "editorActionTransform",
-    "editorTransformCrop",
-    "editorTransformRotate",
-    "cropAspectRatioFree",
-    "cropAspectRatioOriginal",
-    "cropAspectRatioSquare"
-  ],
-
-  "it": [
-    "saveCopyButtonLabel",
-    "applyTooltip",
-    "editorActionTransform",
-    "editorTransformCrop",
-    "editorTransformRotate",
-    "cropAspectRatioFree",
-    "cropAspectRatioOriginal",
-    "cropAspectRatioSquare",
-    "settingsCollectionBurstPatternsTile"
-  ],
-
-  "ja": [
-    "columnCount",
-    "saveCopyButtonLabel",
-    "applyTooltip",
-    "chipActionShowCountryStates",
-    "chipActionCreateVault",
-    "chipActionConfigureVault",
-    "viewerActionLock",
-    "viewerActionUnlock",
-    "editorActionTransform",
-    "editorTransformCrop",
-    "editorTransformRotate",
-    "cropAspectRatioFree",
-    "cropAspectRatioOriginal",
-    "cropAspectRatioSquare",
-    "filterLocatedLabel",
-    "filterTaggedLabel",
-    "albumTierVaults",
-    "subtitlePositionBottom",
-    "vaultBinUsageDialogMessage",
-    "exportEntryDialogWriteMetadata",
-    "stateEmpty",
-    "placeEmpty",
-    "searchStatesSectionTitle",
-    "settingsModificationWarningDialogMessage",
-    "settingsConfirmationVaultDataLoss",
-    "settingsCollectionBurstPatternsTile",
-    "settingsCollectionBurstPatternsNone",
-    "settingsViewerShowDescription",
-    "settingsVideoBackgroundMode",
-    "settingsVideoBackgroundModeDialogTitle",
-    "settingsVideoGestureVerticalDragBrightnessVolume",
-    "settingsDisablingBinWarningDialogMessage",
-    "settingsAccessibilityShowPinchGestureAlternatives",
-    "settingsDisplayUseTvInterface",
-    "settingsWidgetDisplayedItem",
-    "statsTopStatesSectionTitle"
-  ],
-
-  "ko": [
-    "saveCopyButtonLabel",
-    "applyTooltip",
-    "editorActionTransform",
-    "editorTransformCrop",
-    "editorTransformRotate",
-    "cropAspectRatioFree",
-    "cropAspectRatioOriginal",
-    "cropAspectRatioSquare"
-  ],
-
-  "lt": [
-    "columnCount",
-    "saveCopyButtonLabel",
-    "applyTooltip",
-=======
   "hu": [
     "welcomeOptional",
     "welcomeTermsToggle",
@@ -3689,6 +3589,8 @@
     "focalLength",
     "showButtonLabel",
     "hideButtonLabel",
+    "saveCopyButtonLabel",
+    "applyTooltip",
     "changeTooltip",
     "clearTooltip",
     "showTooltip",
@@ -3702,7 +3604,6 @@
     "sourceStateLocatingPlaces",
     "chipActionGoToAlbumPage",
     "chipActionGoToCountryPage",
->>>>>>> develop
     "chipActionGoToPlacePage",
     "chipActionGoToTagPage",
     "chipActionFilterOut",
@@ -3739,14 +3640,6 @@
     "videoActionSetSpeed",
     "viewerActionLock",
     "viewerActionUnlock",
-<<<<<<< HEAD
-    "editorActionTransform",
-    "editorTransformCrop",
-    "editorTransformRotate",
-    "cropAspectRatioFree",
-    "cropAspectRatioOriginal",
-    "cropAspectRatioSquare",
-=======
     "slideshowActionResume",
     "slideshowActionShowInCollection",
     "entryInfoActionEditLocation",
@@ -3755,13 +3648,18 @@
     "entryInfoActionEditTags",
     "entryInfoActionExportMetadata",
     "entryInfoActionRemoveLocation",
+    "editorActionTransform",
+    "editorTransformCrop",
+    "editorTransformRotate",
+    "cropAspectRatioFree",
+    "cropAspectRatioOriginal",
+    "cropAspectRatioSquare",
     "filterAspectRatioLandscapeLabel",
     "filterAspectRatioPortraitLabel",
     "filterBinLabel",
     "filterFavouriteLabel",
     "filterNoDateLabel",
     "filterNoAddressLabel",
->>>>>>> develop
     "filterLocatedLabel",
     "filterNoLocationLabel",
     "filterNoRatingLabel",
@@ -4245,17 +4143,44 @@
     "filePickerUseThisFolder"
   ],
 
+  "id": [
+    "saveCopyButtonLabel",
+    "applyTooltip",
+    "editorActionTransform",
+    "editorTransformCrop",
+    "editorTransformRotate",
+    "cropAspectRatioFree",
+    "cropAspectRatioOriginal",
+    "cropAspectRatioSquare"
+  ],
+
   "it": [
+    "saveCopyButtonLabel",
+    "applyTooltip",
+    "editorActionTransform",
+    "editorTransformCrop",
+    "editorTransformRotate",
+    "cropAspectRatioFree",
+    "cropAspectRatioOriginal",
+    "cropAspectRatioSquare",
     "settingsCollectionBurstPatternsTile"
   ],
 
   "ja": [
     "columnCount",
+    "saveCopyButtonLabel",
+    "applyTooltip",
     "chipActionShowCountryStates",
     "chipActionCreateVault",
     "chipActionConfigureVault",
     "viewerActionLock",
     "viewerActionUnlock",
+    "editorActionTransform",
+    "editorTransformCrop",
+    "editorTransformRotate",
+    "cropAspectRatioFree",
+    "cropAspectRatioOriginal",
+    "cropAspectRatioSquare",
     "filterLocatedLabel",
     "filterTaggedLabel",
     "albumTierVaults",
@@ -4280,8 +4205,21 @@
     "statsTopStatesSectionTitle"
   ],
 
+  "ko": [
+    "saveCopyButtonLabel",
+    "applyTooltip",
+    "editorActionTransform",
+    "editorTransformCrop",
+    "editorTransformRotate",
+    "cropAspectRatioFree",
+    "cropAspectRatioOriginal",
+    "cropAspectRatioSquare"
+  ],
+
   "lt": [
     "columnCount",
+    "saveCopyButtonLabel",
+    "applyTooltip",
     "chipActionGoToPlacePage",
     "chipActionLock",
     "chipActionShowCountryStates",
@@ -4289,6 +4227,12 @@
     "chipActionConfigureVault",
     "viewerActionLock",
     "viewerActionUnlock",
+    "editorActionTransform",
+    "editorTransformCrop",
+    "editorTransformRotate",
+    "cropAspectRatioFree",
+    "cropAspectRatioOriginal",
+    "cropAspectRatioSquare",
     "filterLocatedLabel",
     "filterTaggedLabel",
     "albumTierVaults",
@@ -4777,7 +4721,6 @@
     "tagPlaceholderState"
   ],
 
-<<<<<<< HEAD
   "pl": [
     "saveCopyButtonLabel",
     "applyTooltip",
@@ -4792,23 +4735,12 @@
   "pt": [
     "saveCopyButtonLabel",
     "applyTooltip",
-    "chipActionShowCountryStates",
-    "viewerActionLock",
-    "viewerActionUnlock",
     "editorActionTransform",
     "editorTransformCrop",
     "editorTransformRotate",
     "cropAspectRatioFree",
     "cropAspectRatioOriginal",
-    "cropAspectRatioSquare",
-    "statePageTitle",
-    "stateEmpty",
-    "searchStatesSectionTitle",
-    "settingsCollectionBurstPatternsTile",
-    "settingsCollectionBurstPatternsNone",
-    "settingsVideoBackgroundModeDialogTitle",
-    "statsTopStatesSectionTitle",
-    "tagPlaceholderState"
+    "cropAspectRatioSquare"
   ],
 
   "ro": [
@@ -4822,8 +4754,6 @@
     "cropAspectRatioSquare"
   ],
 
-=======
->>>>>>> develop
   "ru": [
     "saveCopyButtonLabel",
     "applyTooltip",
